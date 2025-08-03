@@ -1,0 +1,58 @@
+// Theme System Entry Point
+@import 'variables';
+@import 'light';
+@import 'dark';
+@import 'fancy';
+
+// Theme-aware utility classes using Tailwind's variable names
+.bg-background {
+  background: hsl(var(--background));
+}
+
+.bg-card {
+  background: hsl(var(--card));
+}
+
+.bg-muted {
+  background: hsl(var(--muted));
+}
+
+.bg-primary {
+  background: hsl(var(--primary));
+}
+
+.bg-secondary {
+  background: hsl(var(--secondary));
+}
+
+.text-foreground {
+  color: hsl(var(--foreground));
+}
+
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+.text-primary-foreground {
+  color: hsl(var(--primary-foreground));
+}
+
+.border-border {
+  border-color: hsl(var(--border));
+}
+
+.shadow-theme-sm {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-theme-base {
+  box-shadow: var(--shadow-base);
+}
+
+.shadow-theme-md {
+  box-shadow: var(--shadow-md);
+}
+
+.shadow-theme-lg {
+  box-shadow: var(--shadow-lg);
+}
