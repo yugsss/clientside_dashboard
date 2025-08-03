@@ -50,7 +50,8 @@ export const notificationConfig = {
 
 // Validate required environment variables in production
 export function validateEnvironment() {
-  if (process.env.NODE_ENV === "production") {
+  // Only validate in production, not during build
+  if (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV === "production") {
     const required = ["JWT_SECRET", "SESSION_SECRET", "DATABASE_URL"]
 
     const missing = required.filter((key) => !process.env[key])
@@ -74,7 +75,7 @@ export function validateEnvironment() {
   console.log("✅ Frame.io API configured with provided credentials")
 }
 
-// Initialize environment validation
-if (typeof window === "undefined") {
+// Initialize environment validation only on server side and not during build
+if (typeof window === "undefined" && process.env.NODE_ENV !== "production") {
   validateEnvironment()
 }

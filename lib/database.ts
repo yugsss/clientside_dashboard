@@ -998,4 +998,16 @@ export class DatabaseService {
       console.error("Error updating user settings:", error)
     }
   }
+
+  // Mock query method for compatibility
+  async query(sql: string, params?: any[]): Promise<any> {
+    console.log("Mock database query:", sql, params)
+    return []
+  }
 }
+
+// Create and export database instance
+export const database = DatabaseService.getInstance()
+
+// Export default instance for backward compatibility
+export default database

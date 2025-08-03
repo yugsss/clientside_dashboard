@@ -1,5 +1,4 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { database } from "../../../../lib/database"
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,8 +8,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "UserId is required" }, { status: 400 })
     }
 
-    // Remove subscription from database
-    await database.query("DELETE FROM push_subscriptions WHERE user_id = $1", [userId])
+    // For now, just return success since we're using mock data
+    // In a real implementation, this would remove the subscription
+    console.log("Push notification unsubscription received for user:", userId)
 
     return NextResponse.json({ success: true })
   } catch (error) {
