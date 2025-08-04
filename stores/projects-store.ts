@@ -2,6 +2,7 @@ import { create } from "zustand"
 import { devtools } from "zustand/middleware"
 import type { Project, Video } from "../types"
 import { frameioService } from "../lib/frameio"
+import { demoUsers } from "../lib/demo-data"
 
 interface ProjectsState {
   projects: Project[]
@@ -9,9 +10,10 @@ interface ProjectsState {
   loading: boolean
   error: string | null
   initialized: boolean
+  selectedProject: Project | null
 
   // Actions
-  fetchProjects: () => Promise<void>
+  fetchProjects: (userId?: string) => Promise<void>
   fetchProjectVideos: (projectId: string) => Promise<void>
   createProject: (project: Omit<Project, "id" | "createdAt" | "updatedAt">) => Promise<Project>
   updateProject: (id: string, updates: Partial<Project>) => Promise<void>
@@ -19,6 +21,9 @@ interface ProjectsState {
   uploadVideo: (projectId: string, file: File) => Promise<Video>
   initializeFrameIO: () => Promise<void>
   clearError: () => void
+  updateProjectStatus: (projectId: string, status: Project["status"]) => Promise<void>
+  setSelectedProject: (project: Project | null) => void
+  getProjectsByUser: (userId: string) => Project[]
 }
 
 // Mock projects data for development
@@ -113,6 +118,7 @@ export const useProjectsStore = create<ProjectsState>()(
       loading: false,
       error: null,
       initialized: false,
+      selectedProject: null,
 
       initializeFrameIO: async () => {
         try {
@@ -123,7 +129,7 @@ export const useProjectsStore = create<ProjectsState>()(
         }
       },
 
-      fetchProjects: async () => {
+      fetchProjects: async (userId?: string) => {
         try {
           set({ loading: true, error: null })
 
@@ -154,6 +160,12 @@ export const useProjectsStore = create<ProjectsState>()(
               frameioProjectId: fp.id,
               tags: [],
             }))
+          }
+
+          // If userId is provided, filter projects for that specific user
+          if (userId) {
+            const user = demoUsers.find((u) => u.id === userId)
+            projects = user?.projects || []
           }
 
           set({ projects, loading: false })
@@ -378,6 +390,37 @@ export const useProjectsStore = create<ProjectsState>()(
 
       clearError: () => {
         set({ error: null })
+      },
+
+      updateProjectStatus: async (projectId: string, status: Project["status"]) => {
+        try {
+          // Simulate API call
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+
+          set((state) => ({
+            projects: state.projects.map((project) =>
+              project.id === projectId
+                ? {
+                    ...project,
+                    status,
+                    updatedAt: new Date().toISOString(),
+                    completedAt: status === "completed" ? new Date().toISOString() : project.completedAt,
+                  }
+                : project,
+            ),
+          }))
+        } catch (error) {
+          set({ error: "Failed to update project status" })
+        }
+      },
+
+      setSelectedProject: (project: Project | null) => {
+        set({ selectedProject: project })
+      },
+
+      getProjectsByUser: (userId: string) => {
+        const user = demoUsers.find((u) => u.id === userId)
+        return user?.projects || []
       },
     }),
     { name: "projects-store" },

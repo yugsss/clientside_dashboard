@@ -2,19 +2,22 @@ import { type NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId } = await request.json()
+    const body = await request.json()
+    const { userId, endpoint } = body
 
-    if (!userId) {
-      return NextResponse.json({ error: "UserId is required" }, { status: 400 })
+    if (!userId || !endpoint) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // For now, just return success since we're using mock data
-    // In a real implementation, this would remove the subscription
-    console.log("Push notification unsubscription received for user:", userId)
+    // Mock subscription removal
+    console.log("Mock notification unsubscription:", { userId, endpoint })
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({
+      success: true,
+      message: "Subscription removed successfully",
+    })
   } catch (error) {
-    console.error("Error unsubscribing from push notifications:", error)
-    return NextResponse.json({ error: "Failed to unsubscribe from notifications" }, { status: 500 })
+    console.error("Unsubscription error:", error)
+    return NextResponse.json({ error: "Failed to remove subscription" }, { status: 500 })
   }
 }

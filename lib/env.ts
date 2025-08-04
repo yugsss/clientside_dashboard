@@ -1,81 +1,89 @@
-// Server-side environment variables
-export const serverConfig = {
-  jwtSecret: process.env.JWT_SECRET || "dev-jwt-secret-change-in-production",
-  sessionSecret: process.env.SESSION_SECRET || "dev-session-secret-change-in-production",
-  frameioApiKey: process.env.FRAMEIO_API_KEY || "7233b6e913af4f2e8a99d3eee444f0c8",
-  googleClientId: process.env.GOOGLE_CLIENT_ID,
-  googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY,
-  vapidEmail: process.env.VAPID_EMAIL,
-  websocketPort: Number.parseInt(process.env.WEBSOCKET_PORT || "3001"),
-  corsOrigin: process.env.CORS_ORIGIN || "http://localhost:3000",
+// Environment variables validation and types
+export interface EnvironmentConfig {
+  // Frame.io Configuration
+  FRAMEIO_API_KEY: string
+  FRAMEIO_WEBHOOK_SECRET: string
+  FRAMEIO_API_URL: string
+
+  // Next.js Configuration
+  NEXTAUTH_SECRET: string
+  NEXTAUTH_URL: string
+
+  // Application Configuration
+  NEXT_PUBLIC_APP_NAME: string
+  NEXT_PUBLIC_APP_VERSION: string
+
+  // Database Configuration (Supabase)
+  SUPABASE_SUPABASE_URL: string
+  SUPABASE_SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_URL: string
+  SUPABASE_SUPABASE_ANON_KEY: string
+  SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY_ANON_KEY_ANON_KEY: string
+  SUPABASE_SUPABASE_SERVICE_ROLE_KEY: string
+
+  // PostgreSQL Configuration
+  DATABASE_URL: string
+  POSTGRES_URL: string
+  POSTGRES_PRISMA_URL: string
 }
 
-// Client-side environment variables
-export const clientConfig = {
-  frameioApiKey: process.env.NEXT_PUBLIC_FRAMEIO_API_KEY || "7233b6e913af4f2e8a99d3eee444f0c8",
-  vapidPublicKey: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
-  websocketUrl: process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://localhost:3001",
-}
+// Validate required environment variables
+function validateEnv(): EnvironmentConfig {
+  const requiredVars = ["FRAMEIO_API_KEY", "FRAMEIO_WEBHOOK_SECRET", "NEXTAUTH_SECRET", "NEXTAUTH_URL", "DATABASE_URL"]
 
-// Database configuration
-export const databaseConfig = {
-  url: process.env.DATABASE_URL || process.env.POSTGRES_URL || "postgresql://localhost:5432/videoedit_dev",
-  maxConnections: Number.parseInt(process.env.DB_MAX_CONNECTIONS || "20"),
-}
+  const missing = requiredVars.filter((varName) => !process.env[varName])
 
-// Auth configuration
-export const authConfig = {
-  jwtSecret: serverConfig.jwtSecret,
-  sessionSecret: serverConfig.sessionSecret,
-  googleClientId: serverConfig.googleClientId,
-  googleClientSecret: serverConfig.googleClientSecret,
-  tokenExpiry: "15m",
-  refreshTokenExpiry: "7d",
-}
-
-// Frame.io configuration
-export const frameioConfig = {
-  apiKey: serverConfig.frameioApiKey || clientConfig.frameioApiKey,
-  baseUrl: process.env.FRAMEIO_API_URL || "https://api.frame.io/v4",
-  webhookSecret: process.env.FRAMEIO_WEBHOOK_SECRET || "p8e-Mgi7xeMg6jCCS4vPGZDa-kSBQO4JuhgB",
-}
-
-// Notification configuration
-export const notificationConfig = {
-  vapidPublicKey: clientConfig.vapidPublicKey,
-  vapidPrivateKey: serverConfig.vapidPrivateKey,
-  vapidEmail: serverConfig.vapidEmail,
-}
-
-// Validate required environment variables in production
-export function validateEnvironment() {
-  // Only validate in production, not during build
-  if (process.env.NODE_ENV === "production" && process.env.VERCEL_ENV === "production") {
-    const required = ["JWT_SECRET", "SESSION_SECRET", "DATABASE_URL"]
-
-    const missing = required.filter((key) => !process.env[key])
-
-    if (missing.length > 0) {
-      throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
-    }
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(", ")}`)
   }
 
-  // Warn about missing optional variables
-  const optional = ["GOOGLE_CLIENT_ID", "NEXT_PUBLIC_VAPID_PUBLIC_KEY"]
+  return {
+    // Frame.io
+    FRAMEIO_API_KEY: process.env.FRAMEIO_API_KEY || process.env.NEXT_PUBLIC_FRAMEIO_API_KEY || "",
+    FRAMEIO_WEBHOOK_SECRET: process.env.FRAMEIO_WEBHOOK_SECRET || "",
+    FRAMEIO_API_URL: process.env.FRAMEIO_API_URL || "https://api.frame.io/v4",
 
-  const missingOptional = optional.filter((key) => !process.env[key])
+    // Next.js
+    NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || "",
+    NEXTAUTH_URL: process.env.NEXTAUTH_URL || "",
 
-  if (missingOptional.length > 0) {
-    console.warn(`⚠️ Optional environment variables not set: ${missingOptional.join(", ")}`)
-    console.warn("Some features may use mock data or be disabled.")
+    // App
+    NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || "EditLobby",
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION || "1.0.0",
+
+    // Supabase
+    SUPABASE_SUPABASE_URL: process.env.SUPABASE_SUPABASE_URL || "",
+    SUPABASE_NEXT_PUBLIC_SUPABASE_URL: process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_URL || "",
+    SUPABASE_SUPABASE_ANON_KEY: process.env.SUPABASE_SUPABASE_ANON_KEY || "",
+    SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    SUPABASE_SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SUPABASE_SERVICE_ROLE_KEY || "",
+
+    // Database
+    DATABASE_URL: process.env.DATABASE_URL!,
+    POSTGRES_URL: process.env.POSTGRES_URL || process.env.DATABASE_URL!,
+    POSTGRES_PRISMA_URL: process.env.POSTGRES_PRISMA_URL || process.env.DATABASE_URL!,
   }
-
-  // Frame.io is now configured with fallback values
-  console.log("✅ Frame.io API configured with provided credentials")
 }
 
-// Initialize environment validation only on server side and not during build
-if (typeof window === "undefined" && process.env.NODE_ENV !== "production") {
-  validateEnvironment()
+// Export validated environment configuration
+export const env = validateEnv()
+
+// Helper functions
+export function isProduction(): boolean {
+  return process.env.NODE_ENV === "production"
+}
+
+export function isDevelopment(): boolean {
+  return process.env.NODE_ENV === "development"
+}
+
+export function getBaseUrl(): string {
+  if (typeof window !== "undefined") {
+    return window.location.origin
+  }
+
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+
+  return env.NEXTAUTH_URL
 }

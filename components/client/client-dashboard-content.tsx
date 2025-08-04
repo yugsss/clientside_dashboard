@@ -32,12 +32,52 @@ import {
   CheckCircle,
   XCircle,
   MessageSquare,
+  Zap,
+  Star,
+  Gem,
 } from "lucide-react"
 import { useAuthStore } from "../../stores/auth-store"
-import { useState } from "react"
-import { DemoAccountSwitcher } from "./demo-account-switcher"
+import { useState, useEffect } from "react"
 import { VideoPlayerWithComments } from "../video/video-player-with-comments"
-import { demoComments } from "../../lib/demo-data"
+
+const planFeatures = {
+  basic: {
+    name: "Basic Plan",
+    icon: Zap,
+    color: "bg-gray-100 text-gray-800",
+    projects: 1,
+    storage: "1GB",
+    features: ["Basic editing tools", "Standard export", "Email support"],
+    limits: { projects: 1, collaborators: 1, downloads: 10 },
+  },
+  monthly: {
+    name: "Monthly Plan",
+    icon: Star,
+    color: "bg-blue-100 text-blue-800",
+    projects: 10,
+    storage: "10GB",
+    features: ["Advanced editing", "HD export", "Collaboration tools", "Priority support"],
+    limits: { projects: 10, collaborators: 5, downloads: 100 },
+  },
+  premium: {
+    name: "Premium Plan",
+    icon: Crown,
+    color: "bg-purple-100 text-purple-800",
+    projects: 25,
+    storage: "50GB",
+    features: ["Professional tools", "HD downloads", "Advanced analytics", "Premium support"],
+    limits: { projects: 25, collaborators: 15, downloads: 500 },
+  },
+  ultimate: {
+    name: "Ultimate Plan",
+    icon: Gem,
+    color: "bg-gold-100 text-gold-800",
+    projects: "Unlimited",
+    storage: "500GB",
+    features: ["All features", "4K downloads", "White-label", "Dedicated support"],
+    limits: { projects: -1, collaborators: -1, downloads: -1 },
+  },
+}
 
 export function ClientDashboardContent() {
   const { user, requestNewProject, approveProject, requestRevision } = useAuthStore()
@@ -50,11 +90,64 @@ export function ClientDashboardContent() {
   const [revisionFeedback, setRevisionFeedback] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [stats, setStats] = useState({
+    projectsUsed: 0,
+    storageUsed: 0,
+    collaborators: 0,
+    downloadsThisMonth: 0,
+  })
 
-  if (!user) return null
+  // Ensure user is loaded
+  useEffect(() => {
+    if (!user) {
+      useAuthStore.getState().checkAuth()
+    }
+  }, [user])
 
-  const activeProject = user.projects?.find((p) => p.status === "in_progress" || p.status === "in_review")
-  const projectComments = demoComments.filter((c) => c.projectId === activeProject?.id)
+  // Get current plan features
+  const currentPlan = user?.plan ? planFeatures[user.plan.id as keyof typeof planFeatures] : planFeatures.basic
+  const PlanIcon = currentPlan.icon
+
+  useEffect(() => {
+    // Simulate loading user stats based on plan
+    setStats({
+      projectsUsed: Math.floor(Math.random() * (currentPlan.limits.projects > 0 ? currentPlan.limits.projects : 10)),
+      storageUsed: Math.floor(Math.random() * 80),
+      collaborators: Math.floor(
+        Math.random() * (currentPlan.limits.collaborators > 0 ? currentPlan.limits.collaborators : 5),
+      ),
+      downloadsThisMonth: Math.floor(
+        Math.random() * (currentPlan.limits.downloads > 0 ? currentPlan.limits.downloads : 50),
+      ),
+    })
+  }, [currentPlan])
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-500 mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Safely access user properties with defaults
+  const userProjects = user.projects || []
+  const userPlan = user.plan || {
+    id: "basic",
+    name: "Basic",
+    price: 0,
+    type: "per-video",
+    features: [],
+    canRequestNewProject: true,
+    activeProjects: 0,
+    projectsUsed: 0,
+    projectLimit: 1,
+  }
+
+  const activeProject = userProjects.find((p) => p.status === "in_progress" || p.status === "in_review")
 
   const tabs = [
     { id: "overview", label: "Overview", icon: FileText },
@@ -67,7 +160,7 @@ export function ClientDashboardContent() {
     switch (planId) {
       case "basic":
         return "from-blue-500 to-blue-600"
-      case "monthly_pass":
+      case "monthly":
         return "from-green-500 to-green-600"
       case "premium":
         return "from-purple-500 to-purple-600"
@@ -80,7 +173,7 @@ export function ClientDashboardContent() {
 
   const getPlanBadge = (planId: string) => {
     switch (planId) {
-      case "monthly_pass":
+      case "monthly":
         return { text: "Save $100", color: "bg-green-500/20 text-green-400 border-green-500/30" }
       case "premium":
         return { text: "Most Popular", color: "bg-purple-500/20 text-purple-400 border-purple-500/30" }
@@ -89,6 +182,11 @@ export function ClientDashboardContent() {
       default:
         return null
     }
+  }
+
+  const getUsagePercentage = (used: number, limit: number) => {
+    if (limit === -1) return 0 // Unlimited
+    return Math.min((used / limit) * 100, 100)
   }
 
   const handleNewProject = async () => {
@@ -100,14 +198,17 @@ export function ClientDashboardContent() {
     setLoading(true)
     setError("")
 
-    const result = await requestNewProject(newProjectData)
-
-    if (result.success) {
-      setShowNewProjectDialog(false)
-      setNewProjectData({ title: "", description: "" })
-      setActiveTab("active")
-    } else {
-      setError(result.error || "Failed to create project")
+    try {
+      const result = await requestNewProject(newProjectData)
+      if (result.success) {
+        setShowNewProjectDialog(false)
+        setNewProjectData({ title: "", description: "" })
+        setActiveTab("active")
+      } else {
+        setError(result.error || "Failed to create project")
+      }
+    } catch (error) {
+      setError("Failed to create project")
     }
 
     setLoading(false)
@@ -117,13 +218,16 @@ export function ClientDashboardContent() {
     if (!selectedProject) return
 
     setLoading(true)
-    const result = await approveProject(selectedProject.id)
-
-    if (result.success) {
-      setShowApprovalDialog(false)
-      setSelectedProject(null)
-    } else {
-      setError(result.error || "Failed to approve project")
+    try {
+      const result = await approveProject(selectedProject.id)
+      if (result.success) {
+        setShowApprovalDialog(false)
+        setSelectedProject(null)
+      } else {
+        setError(result.error || "Failed to approve project")
+      }
+    } catch (error) {
+      setError("Failed to approve project")
     }
 
     setLoading(false)
@@ -138,14 +242,17 @@ export function ClientDashboardContent() {
     setLoading(true)
     setError("")
 
-    const result = await requestRevision(selectedProject.id, revisionFeedback)
-
-    if (result.success) {
-      setShowRevisionDialog(false)
-      setRevisionFeedback("")
-      setSelectedProject(null)
-    } else {
-      setError(result.error || "Failed to request revision")
+    try {
+      const result = await requestRevision(selectedProject.id, revisionFeedback)
+      if (result.success) {
+        setShowRevisionDialog(false)
+        setRevisionFeedback("")
+        setSelectedProject(null)
+      } else {
+        setError(result.error || "Failed to request revision")
+      }
+    } catch (error) {
+      setError("Failed to request revision")
     }
 
     setLoading(false)
@@ -154,35 +261,35 @@ export function ClientDashboardContent() {
   const statsCards = [
     {
       title: "Total Projects",
-      value: user.projects?.length || 0,
-      subtitle: `${user.projects?.filter((p) => p.status === "completed").length || 0} completed`,
+      value: userProjects.length,
+      subtitle: `${userProjects.filter((p) => p.status === "completed").length} completed`,
       icon: Video,
       iconColor: "text-blue-400",
     },
     {
       title: "Total Spent",
-      value: `$${user.totalSpent}`,
-      subtitle: `Since ${user.memberSince}`,
+      value: `$${user.totalSpent || 0}`,
+      subtitle: `Since ${user.memberSince || "N/A"}`,
       icon: DollarSign,
       iconColor: "text-green-400",
     },
     {
       title: "Revisions Used",
-      value: user.projects?.reduce((sum, p) => sum + (p.revisions || 0), 0) || 0,
+      value: userProjects.reduce((sum, p) => sum + (p.revisions || 0), 0),
       subtitle: "Across all projects",
       icon: RotateCcw,
       iconColor: "text-yellow-400",
     },
     {
       title: "Member Since",
-      value: user.memberSince,
-      subtitle: `${user.memberDays} days`,
+      value: user.memberSince || "N/A",
+      subtitle: `${user.memberDays || 0} days`,
       icon: CalendarDays,
       iconColor: "text-purple-400",
     },
   ]
 
-  const planBadge = getPlanBadge(user.plan.id)
+  const planBadge = getPlanBadge(userPlan.id)
 
   return (
     <div className="min-h-screen bg-slate-900 text-white">
@@ -191,15 +298,16 @@ export function ClientDashboardContent() {
         <div className="flex items-center justify-between p-6">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">EL</span>
+              <span className="text-white font-bold text-lg">{user.name?.charAt(0)?.toUpperCase() || "U"}</span>
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Welcome back, {user.name}!</h1>
               <p className="text-slate-400">Manage your video projects and track progress</p>
             </div>
           </div>
-          <div className="flex items-center space-x-3">
-            <DemoAccountSwitcher />
+          <div className="flex items-center space-x-2">
+            <PlanIcon className="h-6 w-6" />
+            <Badge className={currentPlan.color}>{currentPlan.name}</Badge>
           </div>
         </div>
       </div>
@@ -220,14 +328,14 @@ export function ClientDashboardContent() {
 
         {/* Plan Summary Card */}
         <Card className="bg-slate-800 border-slate-700 overflow-hidden">
-          <div className={`h-1 bg-gradient-to-r ${getPlanColor(user.plan.id)}`} />
+          <div className={`h-1 bg-gradient-to-r ${getPlanColor(userPlan.id)}`} />
           <CardHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <div
-                  className={`w-10 h-10 bg-gradient-to-r ${getPlanColor(user.plan.id)} rounded-lg flex items-center justify-center`}
+                  className={`w-10 h-10 bg-gradient-to-r ${getPlanColor(userPlan.id)} rounded-lg flex items-center justify-center`}
                 >
-                  {user.plan.id === "ultimate" ? (
+                  {userPlan.id === "ultimate" ? (
                     <Crown className="h-5 w-5 text-white" />
                   ) : (
                     <Check className="h-5 w-5 text-white" />
@@ -235,15 +343,15 @@ export function ClientDashboardContent() {
                 </div>
                 <div>
                   <div className="flex items-center space-x-2">
-                    <CardTitle className="text-xl font-bold text-white">{user.plan.name}</CardTitle>
+                    <CardTitle className="text-xl font-bold text-white">{userPlan.name}</CardTitle>
                     {planBadge && <Badge className={planBadge.color}>{planBadge.text}</Badge>}
                   </div>
                   <p className="text-slate-400 text-lg font-semibold">
-                    ${user.plan.price}/{user.plan.type === "monthly" ? "month" : "video"}
+                    ${userPlan.price}/{userPlan.type === "monthly" ? "month" : "video"}
                   </p>
                 </div>
               </div>
-              {user.plan.id !== "ultimate" && user.plan.canRequestNewProject && (
+              {userPlan.id !== "ultimate" && (
                 <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent">
                   <TrendingUp className="h-4 w-4 mr-2" />
                   Upgrade Plan
@@ -253,28 +361,27 @@ export function ClientDashboardContent() {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Monthly Plans Progress */}
-            {user.plan.type === "monthly" && (
+            {userPlan.type === "monthly" && (
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-slate-300 font-medium">
-                    {user.plan.id === "ultimate" ? "Projects This Month" : "Projects Used This Month"}
+                    {userPlan.id === "ultimate" ? "Projects This Month" : "Projects Used This Month"}
                   </span>
                   <span className="text-white font-bold">
-                    {user.plan.projectsUsed}
-                    {user.plan.projectLimit === "unlimited" ? " ∞" : `/${user.plan.projectLimit}`}
+                    {userPlan.projectsUsed || 0}
+                    {userPlan.projectLimit === "unlimited" ? " ∞" : `/${userPlan.projectLimit || 1}`}
                   </span>
                 </div>
-                {user.plan.projectLimit !== "unlimited" && (
+                {userPlan.projectLimit !== "unlimited" && (
                   <Progress
-                    value={(user.plan.projectsUsed / (user.plan.projectLimit as number)) * 100}
+                    value={((userPlan.projectsUsed || 0) / ((userPlan.projectLimit as number) || 1)) * 100}
                     className="h-2 mb-2"
                   />
                 )}
                 <div className="flex items-center text-slate-400 text-sm">
                   <Calendar className="h-4 w-4 mr-1" />
-                  {user.plan.projectLimit === "unlimited" ? "Unlimited projects • " : ""}
-                  Resets on{" "}
-                  {user.plan.monthlyReset ? new Date(user.plan.monthlyReset).toLocaleDateString() : "2/1/2024"}
+                  {userPlan.projectLimit === "unlimited" ? "Unlimited projects • " : ""}
+                  Resets on {userPlan.monthlyReset ? new Date(userPlan.monthlyReset).toLocaleDateString() : "2/1/2024"}
                 </div>
               </div>
             )}
@@ -283,13 +390,13 @@ export function ClientDashboardContent() {
             <div className="flex items-center justify-between py-3 border-t border-slate-700">
               <div className="flex items-center space-x-2">
                 <div
-                  className={`w-2 h-2 rounded-full ${user.plan.activeProjects > 0 ? "bg-orange-400" : "bg-green-500"}`}
+                  className={`w-2 h-2 rounded-full ${(userPlan.activeProjects || 0) > 0 ? "bg-orange-400" : "bg-green-500"}`}
                 />
                 <span className="text-slate-300 font-medium">
-                  {user.plan.activeProjects > 0 ? "Active Project" : "Ready for New Project"}
+                  {(userPlan.activeProjects || 0) > 0 ? "Active Project" : "Ready for New Project"}
                 </span>
               </div>
-              <span className="text-white font-bold">{user.plan.activeProjects}/1</span>
+              <span className="text-white font-bold">{userPlan.activeProjects || 0}/1</span>
             </div>
 
             {/* Action Button */}
@@ -297,18 +404,18 @@ export function ClientDashboardContent() {
               <DialogTrigger asChild>
                 <Button
                   className={`w-full ${
-                    user.plan.canRequestNewProject && user.plan.activeProjects === 0
+                    userPlan.canRequestNewProject && (userPlan.activeProjects || 0) === 0
                       ? "bg-purple-600 hover:bg-purple-700 text-white"
                       : "bg-slate-600 text-slate-400 cursor-not-allowed hover:bg-slate-600"
                   }`}
-                  disabled={!user.plan.canRequestNewProject || user.plan.activeProjects > 0}
+                  disabled={!userPlan.canRequestNewProject || (userPlan.activeProjects || 0) > 0}
                 >
-                  {user.plan.canRequestNewProject && user.plan.activeProjects === 0 ? (
+                  {userPlan.canRequestNewProject && (userPlan.activeProjects || 0) === 0 ? (
                     <>
                       <Check className="h-4 w-4 mr-2" />
                       Request New Project
                     </>
-                  ) : user.plan.activeProjects > 0 ? (
+                  ) : (userPlan.activeProjects || 0) > 0 ? (
                     "Complete Current Project First"
                   ) : (
                     "Request New Project"
@@ -374,7 +481,7 @@ export function ClientDashboardContent() {
             <div className="pt-4 border-t border-slate-700">
               <p className="text-slate-400 font-medium mb-3">Plan includes:</p>
               <div className="space-y-2">
-                {user.plan.features.map((feature, index) => (
+                {(userPlan.features || []).map((feature, index) => (
                   <div key={index} className="flex items-center space-x-2">
                     <Check className="h-4 w-4 text-green-500" />
                     <span className="text-slate-300 text-sm">{feature}</span>
@@ -589,7 +696,7 @@ export function ClientDashboardContent() {
                   <p className="text-slate-400">Watch your video and add timestamped feedback</p>
                 </CardHeader>
                 <CardContent>
-                  <VideoPlayerWithComments project={activeProject} comments={projectComments} onAddComment={() => {}} />
+                  <VideoPlayerWithComments project={activeProject} comments={[]} onAddComment={() => {}} />
                 </CardContent>
               </Card>
             </div>
@@ -598,7 +705,7 @@ export function ClientDashboardContent() {
 
         {activeTab === "all" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {user.projects?.map((project) => (
+            {userProjects.map((project) => (
               <Card key={project.id} className="bg-slate-800 border-slate-700">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
@@ -634,6 +741,13 @@ export function ClientDashboardContent() {
                 </CardContent>
               </Card>
             ))}
+            {userProjects.length === 0 && (
+              <div className="col-span-full text-center py-12">
+                <Video className="h-12 w-12 text-slate-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-slate-300 mb-2">No projects yet</h3>
+                <p className="text-slate-400">Start by requesting your first project!</p>
+              </div>
+            )}
           </div>
         )}
 

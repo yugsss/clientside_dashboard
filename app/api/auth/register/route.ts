@@ -1,47 +1,54 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { DatabaseService } from "../../../../lib/database"
+import bcrypt from "bcryptjs"
+import { neon } from "@neondatabase/serverless"
+
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("📝 API: Registration request received")
+    const { name, email, password } = await request.json()
 
-    const body = await request.json()
-    const { name, email, password, company, role = "client" } = body
-
-    console.log("📧 API: Registration attempt for email:", email)
-
+    // Validate input
     if (!name || !email || !password) {
-      console.log("❌ API: Missing required fields")
-      return NextResponse.json({ success: false, error: "Name, email, and password are required" }, { status: 400 })
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    const db = DatabaseService.getInstance()
+    if (password.length < 6) {
+      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 })
+    }
 
     // Check if user already exists
-    const existingUser = await db.getUserByEmail(email)
-    if (existingUser) {
-      console.log("❌ API: User already exists:", email)
-      return NextResponse.json({ success: false, error: "User with this email already exists" }, { status: 409 })
+    const existingUser = await sql`
+      SELECT id FROM users WHERE email = ${email}
+    `
+
+    if (existingUser.length > 0) {
+      return NextResponse.json({ error: "User already exists" }, { status: 400 })
     }
 
-    // Create new user
-    const userId = await db.createUser({
-      name,
-      email,
-      password,
-      role: role as "admin" | "employee" | "client",
-      company,
-    })
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 12)
 
-    console.log("✅ API: Registration successful for:", email, "with ID:", userId)
+    // Create user with basic plan
+    const [user] = await sql`
+      INSERT INTO users (name, email, password_hash, plan, created_at)
+      VALUES (${name}, ${email}, ${hashedPassword}, 'basic', NOW())
+      RETURNING id, name, email, plan, created_at
+    `
 
     return NextResponse.json({
       success: true,
-      message: "Registration successful",
-      userId,
+      message: "User created successfully",
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        plan: user.plan,
+        created_at: user.created_at,
+      },
     })
   } catch (error) {
-    console.error("💥 API: Registration error:", error)
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+    console.error("Registration error:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }

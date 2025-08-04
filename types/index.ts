@@ -3,27 +3,24 @@ export interface User {
   name: string
   email: string
   avatar: string
-  role: "admin" | "employee" | "client"
+  role: "admin" | "editor" | "client"
   company: string
-  plan: UserPlan
-  projects?: Project[]
+  plan: {
+    id: string
+    name: string
+    price: number
+    type: "monthly" | "per_video"
+    features: string[]
+    projectLimit: number
+    projectsUsed: number
+    activeProjects: number
+    canRequestNewProject: boolean
+    maxRevisions: number
+  }
+  projects: string[]
   totalSpent: number
   memberSince: string
   memberDays: number
-}
-
-export interface UserPlan {
-  id: string
-  name: string
-  price: number
-  type: "per_video" | "monthly"
-  features: string[]
-  projectLimit: number | "unlimited"
-  projectsUsed: number
-  activeProjects: number
-  canRequestNewProject: boolean
-  monthlyReset?: string
-  maxRevisions: number
 }
 
 export interface Project {
@@ -31,23 +28,30 @@ export interface Project {
   title: string
   name: string
   description: string
-  status: "pending" | "in_progress" | "in_review" | "completed" | "cancelled"
+  status: "pending" | "in_progress" | "review" | "completed" | "cancelled"
   priority: "low" | "medium" | "high" | "urgent"
   progress: number
   clientId: string
-  frameioProjectId?: string
-  frameioAssetId?: string
-  videoUrl: string
-  thumbnailUrl: string
-  duration: number // in seconds
+  videoUrl?: string
+  thumbnailUrl?: string
+  duration: number
   createdAt: string
   updatedAt: string
-  dueDate?: string
-  completedAt?: string
   revisions: number
   maxRevisions: number
   canApprove: boolean
   canRequestRevision: boolean
+}
+
+export interface Notification {
+  id: string
+  userId: string
+  title: string
+  message: string
+  type: "system" | "project" | "comment" | "billing"
+  read: boolean
+  createdAt: string
+  actionUrl?: string
 }
 
 export interface VideoComment {
@@ -65,45 +69,9 @@ export interface VideoComment {
   createdAt: string
   updatedAt: string
   resolved: boolean
-  resolvedAt?: string
-  replies: CommentReply[]
-  type: "general" | "revision_request" | "approval"
-  priority: "low" | "medium" | "high"
-}
-
-export interface CommentReply {
-  id: string
-  commentId: string
-  userId: string
-  userName: string
-  userRole: string
-  userAvatar: string
-  content: string
-  createdAt: string
-}
-
-export interface PlanDetails {
-  id: string
-  name: string
-  price: number
-  billing: "per_video" | "monthly"
-  projectLimit: number | "unlimited"
-  features: string[]
-  turnaround: string
-  revisions: number
-  description: string
-  badge?: string
-}
-
-export interface Notification {
-  id: string
-  userId: string
-  title: string
-  message: string
-  type: "comment" | "project_update" | "system" | "billing"
-  read: boolean
-  createdAt: string
-  actionUrl?: string
+  replies: VideoComment[]
+  type: "general" | "technical" | "creative"
+  priority: "low" | "medium" | "high" | "urgent"
 }
 
 export interface Settings {
@@ -123,4 +91,61 @@ export interface Settings {
     language: string
     timezone: string
   }
+}
+
+export interface FrameioProject {
+  id: string
+  name: string
+  description: string
+  private: boolean
+  team_id: string
+  root_asset_id: string
+  created_at: string
+  updated_at: string
+}
+
+export interface FrameioAsset {
+  id: string
+  name: string
+  type: "file" | "folder"
+  parent_id: string
+  project_id: string
+  filesize?: number
+  duration?: number
+  framerate?: number
+  width?: number
+  height?: number
+  thumbnail?: string
+  download_url?: string
+  stream_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface FrameioComment {
+  id: string
+  text: string
+  timestamp?: number
+  page?: number
+  x_coordinate?: number
+  y_coordinate?: number
+  asset_id: string
+  owner: {
+    id: string
+    name: string
+    email: string
+    avatar_url?: string
+  }
+  replies: FrameioComment[]
+  created_at: string
+  updated_at: string
+  resolved: boolean
+  priority?: "low" | "medium" | "high" | "urgent"
+  category?: string
+  tags?: string[]
+  reactions?: {
+    emoji: string
+    count: number
+    users: string[]
+  }[]
 }

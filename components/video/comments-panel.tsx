@@ -1,374 +1,464 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MessageSquare, Send, CheckCircle, Clock, Reply, MoreHorizontal, Edit, Trash2 } from "lucide-react"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import type { Comment } from "../../types"
+import {
+  MessageSquare,
+  Send,
+  Reply,
+  MoreHorizontal,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Target,
+  Tag,
+  Smile,
+  Edit,
+  Trash2,
+  Filter,
+} from "lucide-react"
+import type { FrameioComment } from "../../lib/frameio"
+import type { User } from "../../types"
 
 interface CommentsPanelProps {
-  comments: Comment[]
-  onAddComment: (content: string, timestamp: number) => Promise<void>
-  onResolveComment: (commentId: string) => Promise<void>
+  assetId: string
+  comments: FrameioComment[]
+  onAddComment: (
+    content: string,
+    timestamp: number,
+    annotation?: any,
+    priority?: string,
+    category?: string,
+    tags?: string[],
+  ) => void
+  onUpdateComment: (
+    commentId: string,
+    updates: { text?: string; resolved?: boolean; priority?: string; category?: string; tags?: string[] },
+  ) => void
+  onDeleteComment: (commentId: string) => void
+  onReplyToComment: (commentId: string, text: string) => void
+  onAddReaction?: (commentId: string, emoji: string) => void
+  onRemoveReaction?: (commentId: string, emoji: string) => void
   currentTime: number
-  className?: string
+  currentUser?: User | null
 }
 
 export function CommentsPanel({
+  assetId,
   comments,
   onAddComment,
-  onResolveComment,
+  onUpdateComment,
+  onDeleteComment,
+  onReplyToComment,
+  onAddReaction,
+  onRemoveReaction,
   currentTime,
-  className,
+  currentUser,
 }: CommentsPanelProps) {
   const [newComment, setNewComment] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedTimestamp, setSelectedTimestamp] = useState<number | null>(null)
+  const [newCommentPriority, setNewCommentPriority] = useState("medium")
+  const [newCommentCategory, setNewCommentCategory] = useState("")
+  const [newCommentTags, setNewCommentTags] = useState("")
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
-  const [replyContent, setReplyContent] = useState("")
+  const [replyText, setReplyText] = useState("")
+  const [editingComment, setEditingComment] = useState<string | null>(null)
+  const [editText, setEditText] = useState("")
+  const [filter, setFilter] = useState("all")
+  const [showEmojiPicker, setShowEmojiPicker] = useState<string | null>(null)
   const commentsEndRef = useRef<HTMLDivElement>(null)
+
+  const emojis = ["👍", "❤️", "🎉", "🚀", "💯", "👏", "🔥", "✨", "🎯", "💪", "🤔", "😍"]
 
   useEffect(() => {
     commentsEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [comments])
 
-  const handleSubmitComment = async () => {
+  const handleAddComment = () => {
     if (!newComment.trim()) return
 
-    setIsSubmitting(true)
-    try {
-      const timestamp = selectedTimestamp !== null ? selectedTimestamp : currentTime
-      await onAddComment(newComment, timestamp)
-      setNewComment("")
-      setSelectedTimestamp(null)
-    } catch (error) {
-      console.error("Failed to add comment:", error)
-    } finally {
-      setIsSubmitting(false)
+    const tags = newCommentTags
+      .split(",")
+      .map((tag) => tag.trim())
+      .filter(Boolean)
+
+    onAddComment(newComment, currentTime, undefined, newCommentPriority, newCommentCategory, tags)
+
+    setNewComment("")
+    setNewCommentPriority("medium")
+    setNewCommentCategory("")
+    setNewCommentTags("")
+  }
+
+  const handleReply = (commentId: string) => {
+    if (!replyText.trim()) return
+
+    onReplyToComment(commentId, replyText)
+    setReplyingTo(null)
+    setReplyText("")
+  }
+
+  const handleEdit = (commentId: string) => {
+    if (!editText.trim()) return
+
+    onUpdateComment(commentId, { text: editText })
+    setEditingComment(null)
+    setEditText("")
+  }
+
+  const handleResolve = (commentId: string, resolved: boolean) => {
+    onUpdateComment(commentId, { resolved })
+  }
+
+  const handleAddReaction = (commentId: string, emoji: string) => {
+    onAddReaction?.(commentId, emoji)
+    setShowEmojiPicker(null)
+  }
+
+  const getPriorityIcon = (priority?: string) => {
+    switch (priority) {
+      case "urgent":
+        return <AlertCircle className="h-3 w-3 text-red-500" />
+      case "high":
+        return <AlertCircle className="h-3 w-3 text-orange-500" />
+      case "medium":
+        return <Clock className="h-3 w-3 text-yellow-500" />
+      case "low":
+        return <CheckCircle2 className="h-3 w-3 text-green-500" />
+      default:
+        return <Target className="h-3 w-3 text-gray-500" />
     }
   }
 
-  const handleResolveComment = async (commentId: string) => {
-    try {
-      await onResolveComment(commentId)
-    } catch (error) {
-      console.error("Failed to resolve comment:", error)
+  const getPriorityColor = (priority?: string) => {
+    switch (priority) {
+      case "urgent":
+        return "bg-red-100 text-red-800 border-red-200"
+      case "high":
+        return "bg-orange-100 text-orange-800 border-orange-200"
+      case "medium":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200"
+      case "low":
+        return "bg-green-100 text-green-800 border-green-200"
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, "0")}`
+  const formatTime = (time?: number) => {
+    if (time === undefined) return "00:00"
+    const minutes = Math.floor(time / 60)
+    const seconds = Math.floor(time % 60)
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`
   }
 
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+  const filteredComments = comments.filter((comment) => {
+    if (filter === "all") return true
+    if (filter === "unresolved") return !comment.resolved
+    if (filter === "high-priority") return comment.priority === "high" || comment.priority === "urgent"
+    if (filter === "my-comments") return comment.author.id === currentUser?.id
+    return true
+  })
 
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor(diffInHours * 60)
-      return `${diffInMinutes}m ago`
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h ago`
-    } else {
-      return date.toLocaleDateString()
+  const sortedComments = [...filteredComments].sort((a, b) => {
+    // Sort by timestamp first, then by creation date
+    if (a.timestamp !== b.timestamp) {
+      return (a.timestamp || 0) - (b.timestamp || 0)
     }
-  }
-
-  const sortedComments = [...comments].sort((a, b) => a.timestamp - b.timestamp)
-  const unresolvedComments = sortedComments.filter((c) => !c.resolved)
-  const resolvedComments = sortedComments.filter((c) => c.resolved)
+    return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  })
 
   return (
-    <Card className={`h-full flex flex-col ${className}`}>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <MessageSquare className="h-5 w-5" />
-            <span>Comments</span>
-            <Badge variant="secondary">{comments.length}</Badge>
+    <div className="h-full flex flex-col bg-white">
+      {/* Header */}
+      <CardHeader className="pb-3 border-b">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-lg flex items-center">
+            <MessageSquare className="h-5 w-5 mr-2" />
+            Comments ({comments.length})
+          </CardTitle>
+          <Select value={filter} onValueChange={setFilter}>
+            <SelectTrigger className="w-32">
+              <Filter className="h-4 w-4 mr-1" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="unresolved">Unresolved</SelectItem>
+              <SelectItem value="high-priority">High Priority</SelectItem>
+              <SelectItem value="my-comments">My Comments</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Comment Stats */}
+        <div className="flex items-center space-x-4 text-sm text-gray-600">
+          <div className="flex items-center space-x-1">
+            <AlertCircle className="h-4 w-4 text-orange-500" />
+            <span>{comments.filter((c) => !c.resolved).length} unresolved</span>
           </div>
-          {unresolvedComments.length > 0 && (
-            <Badge variant="outline" className="text-orange-600 border-orange-200">
-              {unresolvedComments.length} unresolved
-            </Badge>
-          )}
-        </CardTitle>
+          <div className="flex items-center space-x-1">
+            <AlertCircle className="h-4 w-4 text-red-500" />
+            <span>{comments.filter((c) => c.priority === "high" || c.priority === "urgent").length} high priority</span>
+          </div>
+        </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col space-y-4 min-h-0">
-        {/* Add Comment Form */}
-        <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Add Comment</span>
-            <div className="flex items-center space-x-2 text-xs text-gray-500">
-              <Clock className="h-3 w-3" />
-              <span>
-                {selectedTimestamp !== null ? `At ${formatTime(selectedTimestamp)}` : `At ${formatTime(currentTime)}`}
-              </span>
-              {selectedTimestamp !== null && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setSelectedTimestamp(null)}
-                  className="h-5 w-5 p-0 text-gray-400 hover:text-gray-600"
-                >
-                  ×
-                </Button>
-              )}
-            </div>
+      {/* Comments List */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {sortedComments.length === 0 ? (
+          <div className="text-center py-8">
+            <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500">No comments yet</p>
+            <p className="text-sm text-gray-400">Add the first comment to start the conversation</p>
           </div>
-
-          <Textarea
-            placeholder="Add your feedback or question..."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            className="min-h-[80px] resize-none"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-                handleSubmitComment()
-              }
-            }}
-          />
-
-          <div className="flex items-center justify-between">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setSelectedTimestamp(currentTime)}
-              disabled={selectedTimestamp === currentTime}
+        ) : (
+          sortedComments.map((comment) => (
+            <Card
+              key={comment.id}
+              className={`${comment.resolved ? "opacity-75" : ""} ${
+                comment.priority === "urgent" || comment.priority === "high" ? "border-l-4 border-l-red-400" : ""
+              }`}
             >
-              Use Current Time ({formatTime(currentTime)})
-            </Button>
-
-            <Button
-              size="sm"
-              onClick={handleSubmitComment}
-              disabled={!newComment.trim() || isSubmitting}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white mr-2" />
-                  Adding...
-                </>
-              ) : (
-                <>
-                  <Send className="h-3 w-3 mr-2" />
-                  Add Comment
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Comments List */}
-        <div className="flex-1 overflow-y-auto space-y-4">
-          {comments.length === 0 ? (
-            <div className="text-center py-8">
-              <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 text-sm">No comments yet</p>
-              <p className="text-gray-400 text-xs">Add the first comment to start the conversation</p>
-            </div>
-          ) : (
-            <>
-              {/* Unresolved Comments */}
-              {unresolvedComments.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-gray-700 flex items-center">
-                    <div className="w-2 h-2 bg-orange-500 rounded-full mr-2" />
-                    Unresolved ({unresolvedComments.length})
-                  </h4>
-                  {unresolvedComments.map((comment) => (
-                    <CommentItem
-                      key={comment.id}
-                      comment={comment}
-                      onResolve={handleResolveComment}
-                      onReply={setReplyingTo}
-                      isReplying={replyingTo === comment.id}
-                      replyContent={replyContent}
-                      setReplyContent={setReplyContent}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Resolved Comments */}
-              {resolvedComments.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-gray-700 flex items-center">
-                    <CheckCircle className="w-4 h-4 text-green-500 mr-2" />
-                    Resolved ({resolvedComments.length})
-                  </h4>
-                  {resolvedComments.map((comment) => (
-                    <CommentItem
-                      key={comment.id}
-                      comment={comment}
-                      onResolve={handleResolveComment}
-                      onReply={setReplyingTo}
-                      isReplying={replyingTo === comment.id}
-                      replyContent={replyContent}
-                      setReplyContent={setReplyContent}
-                    />
-                  ))}
-                </div>
-              )}
-            </>
-          )}
-          <div ref={commentsEndRef} />
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-interface CommentItemProps {
-  comment: Comment
-  onResolve: (commentId: string) => Promise<void>
-  onReply: (commentId: string | null) => void
-  isReplying: boolean
-  replyContent: string
-  setReplyContent: (content: string) => void
-}
-
-function CommentItem({ comment, onResolve, onReply, isReplying, replyContent, setReplyContent }: CommentItemProps) {
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, "0")}`
-  }
-
-  const formatTimestamp = (timestamp: string) => {
-    const date = new Date(timestamp)
-    const now = new Date()
-    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
-
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor(diffInHours * 60)
-      return `${diffInMinutes}m ago`
-    } else if (diffInHours < 24) {
-      return `${Math.floor(diffInHours)}h ago`
-    } else {
-      return date.toLocaleDateString()
-    }
-  }
-
-  return (
-    <div
-      className={`p-3 rounded-lg border ${
-        comment.resolved ? "bg-green-50 border-green-200" : "bg-white border-gray-200"
-      }`}
-    >
-      <div className="flex items-start space-x-3">
-        <Avatar className="w-8 h-8">
-          <AvatarImage src={comment.userAvatar || "/placeholder.svg"} />
-          <AvatarFallback className="text-xs">{comment.userName.charAt(0).toUpperCase()}</AvatarFallback>
-        </Avatar>
-
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center space-x-2">
-              <span className="text-sm font-medium text-gray-900">{comment.userName}</span>
-              <Badge variant="outline" className="text-xs">
-                {formatTime(comment.timestamp)}
-              </Badge>
-            </div>
-
-            <div className="flex items-center space-x-1">
-              <span className="text-xs text-gray-500">{formatTimestamp(comment.createdAt)}</span>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0">
-                    <MoreHorizontal className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onReply(comment.id)}>
-                    <Reply className="h-3 w-3 mr-2" />
-                    Reply
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Edit className="h-3 w-3 mr-2" />
-                    Edit
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-red-600">
-                    <Trash2 className="h-3 w-3 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-
-          <p className="text-sm text-gray-700 mb-2">{comment.content}</p>
-
-          <div className="flex items-center space-x-2">
-            {!comment.resolved && (
-              <Button size="sm" variant="outline" onClick={() => onResolve(comment.id)} className="text-xs h-6">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Resolve
-              </Button>
-            )}
-
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onReply(isReplying ? null : comment.id)}
-              className="text-xs h-6"
-            >
-              <Reply className="h-3 w-3 mr-1" />
-              Reply
-            </Button>
-          </div>
-
-          {/* Reply Form */}
-          {isReplying && (
-            <div className="mt-3 space-y-2">
-              <Textarea
-                placeholder="Write a reply..."
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                className="min-h-[60px] text-sm"
-              />
-              <div className="flex items-center space-x-2">
-                <Button size="sm" className="text-xs h-6">
-                  <Send className="h-3 w-3 mr-1" />
-                  Reply
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => onReply(null)} className="text-xs h-6">
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Replies */}
-          {comment.replies.length > 0 && (
-            <div className="mt-3 space-y-2 pl-4 border-l-2 border-gray-200">
-              {comment.replies.map((reply) => (
-                <div key={reply.id} className="flex items-start space-x-2">
-                  <Avatar className="w-6 h-6">
-                    <AvatarImage src={reply.userAvatar || "/placeholder.svg"} />
-                    <AvatarFallback className="text-xs">{reply.userName.charAt(0).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-xs font-medium text-gray-900">{reply.userName}</span>
-                      <span className="text-xs text-gray-500">{formatTimestamp(reply.createdAt)}</span>
+              <CardContent className="p-4">
+                {/* Comment Header */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={comment.author.avatar_url || "/placeholder.svg"} />
+                      <AvatarFallback>{comment.author.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium text-sm">{comment.author.name}</span>
+                        {comment.timestamp !== undefined && (
+                          <Badge variant="outline" className="text-xs">
+                            <Clock className="h-3 w-3 mr-1" />
+                            {formatTime(comment.timestamp)}
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-500">{new Date(comment.created_at).toLocaleString()}</div>
                     </div>
-                    <p className="text-xs text-gray-700">{reply.content}</p>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    {comment.priority && (
+                      <Badge className={`text-xs ${getPriorityColor(comment.priority)}`}>
+                        {getPriorityIcon(comment.priority)}
+                        <span className="ml-1 capitalize">{comment.priority}</span>
+                      </Badge>
+                    )}
+                    <Button variant="ghost" size="sm">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+
+                {/* Comment Content */}
+                {editingComment === comment.id ? (
+                  <div className="space-y-2">
+                    <Textarea value={editText} onChange={(e) => setEditText(e.target.value)} className="min-h-[60px]" />
+                    <div className="flex space-x-2">
+                      <Button size="sm" onClick={() => handleEdit(comment.id)}>
+                        Save
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => setEditingComment(null)}>
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-sm leading-relaxed">{comment.text}</p>
+
+                    {/* Category and Tags */}
+                    {(comment.category || (comment.tags && comment.tags.length > 0)) && (
+                      <div className="flex items-center space-x-2">
+                        {comment.category && (
+                          <Badge variant="secondary" className="text-xs">
+                            {comment.category}
+                          </Badge>
+                        )}
+                        {comment.tags?.map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            <Tag className="h-3 w-3 mr-1" />
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Reactions */}
+                    {comment.reactions && Object.keys(comment.reactions).length > 0 && (
+                      <div className="flex items-center space-x-2">
+                        {Object.entries(comment.reactions).map(([emoji, users]) => (
+                          <Button
+                            key={emoji}
+                            variant="outline"
+                            size="sm"
+                            className="h-6 px-2 text-xs bg-transparent"
+                            onClick={() => onRemoveReaction?.(comment.id, emoji)}
+                          >
+                            {emoji} {users.length}
+                          </Button>
+                        ))}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2"
+                          onClick={() => setShowEmojiPicker(showEmojiPicker === comment.id ? null : comment.id)}
+                        >
+                          <Smile className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Emoji Picker */}
+                    {showEmojiPicker === comment.id && (
+                      <div className="flex flex-wrap gap-1 p-2 bg-gray-50 rounded">
+                        {emojis.map((emoji) => (
+                          <Button
+                            key={emoji}
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleAddReaction(comment.id, emoji)}
+                          >
+                            {emoji}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Comment Actions */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Button variant="ghost" size="sm" onClick={() => setReplyingTo(comment.id)} className="text-xs">
+                          <Reply className="h-3 w-3 mr-1" />
+                          Reply
+                        </Button>
+                        {comment.author.id === currentUser?.id && (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingComment(comment.id)
+                                setEditText(comment.text)
+                              }}
+                              className="text-xs"
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onDeleteComment(comment.id)}
+                              className="text-xs text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Delete
+                            </Button>
+                          </>
+                        )}
+                      </div>
+
+                      <Button
+                        variant={comment.resolved ? "outline" : "default"}
+                        size="sm"
+                        onClick={() => handleResolve(comment.id, !comment.resolved)}
+                        className={`text-xs ${
+                          comment.resolved ? "text-green-600 border-green-200" : "bg-green-600 hover:bg-green-700"
+                        }`}
+                      >
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        {comment.resolved ? "Resolved" : "Resolve"}
+                      </Button>
+                    </div>
+
+                    {/* Reply Form */}
+                    {replyingTo === comment.id && (
+                      <div className="mt-3 p-3 bg-gray-50 rounded">
+                        <Textarea
+                          placeholder="Write a reply..."
+                          value={replyText}
+                          onChange={(e) => setReplyText(e.target.value)}
+                          className="mb-2"
+                        />
+                        <div className="flex space-x-2">
+                          <Button size="sm" onClick={() => handleReply(comment.id)}>
+                            <Send className="h-3 w-3 mr-1" />
+                            Reply
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setReplyingTo(null)}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
+        <div ref={commentsEndRef} />
+      </div>
+
+      {/* Add Comment Form */}
+      <div className="border-t p-4 bg-gray-50">
+        <div className="space-y-3">
+          <Textarea
+            placeholder="Add a comment at current time..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            className="min-h-[80px]"
+          />
+
+          {/* Comment Options */}
+          <div className="grid grid-cols-3 gap-2">
+            <Select value={newCommentPriority} onValueChange={setNewCommentPriority}>
+              <SelectTrigger>
+                <SelectValue placeholder="Priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low Priority</SelectItem>
+                <SelectItem value="medium">Medium Priority</SelectItem>
+                <SelectItem value="high">High Priority</SelectItem>
+                <SelectItem value="urgent">Urgent</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <input
+              type="text"
+              placeholder="Category"
+              value={newCommentCategory}
+              onChange={(e) => setNewCommentCategory(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+
+            <input
+              type="text"
+              placeholder="Tags (comma separated)"
+              value={newCommentTags}
+              onChange={(e) => setNewCommentTags(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+            />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-gray-500">Comment will be added at {formatTime(currentTime)}</div>
+            <Button onClick={handleAddComment} disabled={!newComment.trim()}>
+              <Send className="h-4 w-4 mr-2" />
+              Add Comment
+            </Button>
+          </div>
         </div>
       </div>
     </div>
