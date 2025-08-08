@@ -1,112 +1,208 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { DatabaseService } from "../../../lib/database"
+import { verify } from "jsonwebtoken"
+import { DatabaseService } from "@/lib/database"
+import { env } from "@/lib/env"
+
+interface Settings {
+  notifications: {
+    email: boolean
+    push: boolean
+    comments: boolean
+    projectUpdates: boolean
+    billing: boolean
+  }
+  privacy: {
+    profileVisible: boolean
+    activityVisible: boolean
+  }
+  preferences: {
+    theme: "light" | "dark" | "system"
+    language: string
+    timezone: string
+  }
+}
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("🔧 API: Settings GET request received")
+    console.log("⚙️ Get settings request received")
 
-    // Get user ID from session cookie
-    const sessionCookie = request.cookies.get("session")
-    if (!sessionCookie) {
-      console.log("❌ API: No session cookie found")
-      return NextResponse.json({ success: false, error: "No session found" }, { status: 401 })
+    const token = request.cookies.get("auth-token")?.value
+
+    if (!token) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = sessionCookie.value
-    console.log("🔍 API: Loading settings for user:", userId)
+    // Verify JWT token
+    let decoded: { userId: string; email: string; role: string }
+    try {
+      decoded = verify(token, env.JWT_SECRET) as { userId: string; email: string; role: string }
+    } catch (error) {
+      console.error("JWT verification failed:", error)
+      return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 })
+    }
 
     const db = DatabaseService.getInstance()
-    const settings = await db.getUserSettings(userId)
-
-    if (!settings) {
-      console.log("❌ API: Settings not found for user:", userId)
-      return NextResponse.json({ success: false, error: "Settings not found" }, { status: 404 })
+    
+    // Test database connection first
+    const connectionTest = await db.testConnection()
+    if (!connectionTest) {
+      console.error("Database connection failed")
+      return NextResponse.json({ success: false, error: "Database connection failed" }, { status: 500 })
     }
 
-    console.log("✅ API: Settings loaded successfully for user:", userId)
+    const userSettings = await db.getUserSettings(decoded.userId)
 
-    return NextResponse.json(
-      {
+    if (!userSettings) {
+      console.log("No user settings found, creating defaults")
+      const defaultSettings = await db.createDefaultUserSettings(decoded.userId)
+      if (!defaultSettings) {
+        return NextResponse.json({ success: false, error: "Failed to create default settings" }, { status: 500 })
+      }
+      
+      // Return default settings
+      const settings: Settings = {
+        notifications: {
+          email: true,
+          push: true,
+          comments: true,
+          projectUpdates: true,
+          billing: false,
+        },
+        privacy: {
+          profileVisible: true,
+          activityVisible: false,
+        },
+        preferences: {
+          theme: "dark",
+          language: "en",
+          timezone: "UTC",
+        }
+      }
+
+      return NextResponse.json({
         success: true,
         settings,
+      })
+    }
+
+    // Transform database settings to frontend format
+    const settings: Settings = {
+      notifications: {
+        email: userSettings.email_notifications ?? true,
+        push: userSettings.push_notifications ?? true,
+        comments: userSettings.comment_notifications ?? true,
+        projectUpdates: userSettings.project_update_notifications ?? true,
+        billing: userSettings.billing_notifications ?? false,
       },
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-        },
+      privacy: {
+        profileVisible: userSettings.profile_visible ?? true,
+        activityVisible: userSettings.activity_visible ?? false,
       },
-    )
+      preferences: {
+        theme: (userSettings.theme as "light" | "dark" | "system") ?? "dark",
+        language: userSettings.language ?? "en",
+        timezone: userSettings.timezone ?? "UTC",
+      }
+    }
+
+    console.log("✅ Settings retrieved successfully")
+    return NextResponse.json({
+      success: true,
+      settings,
+    })
   } catch (error) {
-    console.error("💥 API: Settings GET error:", error)
+    console.error("💥 Get settings error:", error)
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
       {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        success: false,
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
+      { status: 500 },
     )
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    console.log("🔧 API: Settings PUT request received")
+    console.log("⚙️ Update settings request received")
 
-    // Get user ID from session cookie
-    const sessionCookie = request.cookies.get("session")
-    if (!sessionCookie) {
-      console.log("❌ API: No session cookie found")
-      return NextResponse.json({ success: false, error: "No session found" }, { status: 401 })
+    const token = request.cookies.get("auth-token")?.value
+
+    if (!token) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 })
     }
 
-    const userId = sessionCookie.value
-    const body = await request.json()
-    const { settings } = body
+    // Verify JWT token
+    let decoded: { userId: string; email: string; role: string }
+    try {
+      decoded = verify(token, env.JWT_SECRET) as { userId: string; email: string; role: string }
+    } catch (error) {
+      console.error("JWT verification failed:", error)
+      return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 })
+    }
 
-    console.log("🔍 API: Updating settings for user:", userId)
-    console.log("📝 API: Settings data:", settings)
+    const settings: Settings = await request.json()
 
-    if (!settings) {
-      console.log("❌ API: No settings data provided")
-      return NextResponse.json({ success: false, error: "Settings data is required" }, { status: 400 })
+    // Transform frontend settings to database format
+    const dbSettings = {
+      email_notifications: settings.notifications.email,
+      push_notifications: settings.notifications.push,
+      comment_notifications: settings.notifications.comments,
+      project_update_notifications: settings.notifications.projectUpdates,
+      billing_notifications: settings.notifications.billing,
+      profile_visible: settings.privacy.profileVisible,
+      activity_visible: settings.privacy.activityVisible,
+      theme: settings.preferences.theme,
+      language: settings.preferences.language,
+      timezone: settings.preferences.timezone,
+      updated_at: new Date().toISOString()
     }
 
     const db = DatabaseService.getInstance()
-    const updatedSettings = await db.updateUserSettings(userId, settings)
-
-    if (!updatedSettings) {
-      console.log("❌ API: Failed to update settings for user:", userId)
-      return NextResponse.json({ success: false, error: "Failed to update settings" }, { status: 500 })
+    
+    // Test database connection first
+    const connectionTest = await db.testConnection()
+    if (!connectionTest) {
+      console.error("Database connection failed")
+      return NextResponse.json({ success: false, error: "Database connection failed" }, { status: 500 })
     }
 
-    console.log("✅ API: Settings updated successfully for user:", userId)
+    const success = await db.updateUserSettings(decoded.userId, dbSettings)
 
-    return NextResponse.json(
-      {
-        success: true,
-        settings: updatedSettings,
-        message: "Settings updated successfully",
-      },
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      },
-    )
+    if (!success) {
+      return NextResponse.json({ success: false, error: "Failed to update user settings" }, { status: 500 })
+    }
+
+    // Send notification about settings update
+    try {
+      await db.createNotification({
+        user_id: decoded.userId,
+        title: "Settings Updated",
+        message: "Your account settings have been successfully updated.",
+        type: "system",
+        is_read: false
+      })
+    } catch (notificationError) {
+      console.warn("Failed to create notification:", notificationError)
+      // Don't fail the request if notification creation fails
+    }
+
+    console.log("✅ Settings updated successfully")
+    return NextResponse.json({
+      success: true,
+      message: "Settings updated successfully",
+      settings: dbSettings
+    })
   } catch (error) {
-    console.error("💥 API: Settings PUT error:", error)
+    console.error("💥 Update settings error:", error)
     return NextResponse.json(
-      { success: false, error: "Internal server error" },
       {
-        status: 500,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        success: false,
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
+      { status: 500 },
     )
   }
 }

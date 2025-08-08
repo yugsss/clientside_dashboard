@@ -1,57 +1,202 @@
-interface FrameioConfig {
-  apiKey: string
-  baseUrl: string
+// Frame.io v4 API Types and Utilities
+
+export interface FrameioAccount {
+  id: string
+  name: string
+  email: string
+  avatar_url?: string
+  role: string
+  created_at: string
+  updated_at: string
 }
 
-interface FrameioProject {
+export interface FrameioTeam {
   id: string
   name: string
   description?: string
   created_at: string
   updated_at: string
+  members_count: number
+  projects_count: number
 }
 
-interface FrameioAsset {
+export interface FrameioProject {
   id: string
   name: string
-  type: string
-  filesize: number
-  duration?: number
+  description?: string
+  team_id?: string
+  creator_id: string
   created_at: string
   updated_at: string
+  status: "active" | "archived" | "deleted"
+  privacy: "public" | "private" | "team"
+
+  // v4 features
+  collaboration_settings?: {
+    allow_comments: boolean
+    allow_reactions: boolean
+    require_approval: boolean
+    auto_resolve_comments: boolean
+  }
+
+  analytics?: {
+    total_views: number
+    total_comments: number
+    active_collaborators: number
+    last_activity: string
+  }
 }
 
-interface FrameioComment {
+export interface FrameioAsset {
+  id: string
+  name: string
+  type: "file" | "folder"
+  parent_id?: string
+  project_id: string
+  creator_id: string
+  created_at: string
+  updated_at: string
+
+  // File properties
+  filesize?: number
+  filetype?: string
+  original_name?: string
+
+  // Media properties
+  width?: number
+  height?: number
+  duration?: number
+  fps?: number
+  codec?: string
+  bitrate?: number
+
+  // URLs
+  original_url?: string
+  download_url?: string
+  streaming_url?: string
+  thumbnail_url?: string
+  proxy_url?: string
+
+  // Processing
+  processing_status?: "queued" | "processing" | "completed" | "failed"
+  processing_progress?: number
+  transcoding_status?: "queued" | "processing" | "completed" | "failed"
+
+  // Metadata
+  metadata?: {
+    [key: string]: any
+  }
+
+  // Checksums
+  checksums?: {
+    md5?: string
+    sha256?: string
+  }
+
+  // v4 features
+  analytics?: {
+    view_count: number
+    comment_count: number
+    download_count: number
+    last_viewed_at?: string
+  }
+
+  approval_status?: "pending" | "approved" | "rejected"
+  approval_workflow?: {
+    required_approvers: string[]
+    current_approvers: string[]
+    deadline?: string
+  }
+}
+
+export interface FrameioComment {
   id: string
   text: string
-  timestamp?: number
+  asset_id: string
   author: {
     id: string
     name: string
     email: string
+    avatar_url?: string
   }
   created_at: string
   updated_at: string
-}
 
-class FrameioService {
-  private config: FrameioConfig
+  // Timing
+  timestamp?: number
 
-  constructor(config: FrameioConfig) {
-    this.config = config
+  // Status
+  resolved?: boolean
+  resolved_by?: string
+  resolved_at?: string
+
+  // v4 features
+  priority?: "low" | "medium" | "high" | "urgent"
+  category?: string
+  tags?: string[]
+  mentions?: string[]
+
+  // Reactions (v4)
+  reactions?: {
+    [emoji: string]: Array<{
+      id: string
+      name: string
+      avatar_url?: string
+    }>
   }
 
-  private async makeRequest(endpoint: string, options: RequestInit = {}) {
-    const url = `${this.config.baseUrl}${endpoint}`
-    const headers = {
-      Authorization: `Bearer ${this.config.apiKey}`,
-      "Content-Type": "application/json",
-      ...options.headers,
-    }
+  // Threading
+  parent_comment_id?: string
+  replies_count?: number
 
+  // Visual annotations
+  annotation?: {
+    type: "point" | "rectangle" | "arrow" | "text"
+    coordinates: {
+      x: number
+      y: number
+      width?: number
+      height?: number
+    }
+    color?: string
+    stroke_width?: number
+  }
+
+  // Task management (v4)
+  task?: {
+    assignee_id?: string
+    due_date?: string
+    status?: "open" | "in_progress" | "completed" | "cancelled"
+    priority?: "low" | "medium" | "high" | "urgent"
+  }
+}
+
+export interface FrameioWebhookEvent {
+  event_type: string
+  resource_type: string
+  resource_id: string
+  timestamp: string
+  data: any
+}
+
+// Frame.io API Client
+export class FrameioClient {
+  private apiKey: string
+  private baseUrl = "https://api.frame.io/v2"
+
+  constructor(apiKey: string) {
+    this.apiKey = apiKey
+  }
+
+  private async request(endpoint: string, options: RequestInit = {}) {
+    const url = `${this.baseUrl}${endpoint}`
     const response = await fetch(url, {
       ...options,
-      headers,
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        "Content-Type": "application/json",
+        ...options.headers,
+      },
     })
 
     if (!response.ok) {
@@ -61,103 +206,144 @@ class FrameioService {
     return response.json()
   }
 
-  async getProjects(): Promise<FrameioProject[]> {
-    return this.makeRequest("/projects")
+  // Account methods
+  async getAccount(): Promise<FrameioAccount> {
+    return this.request("/accounts/me")
+  }
+
+  // Team methods
+  async getTeams(): Promise<FrameioTeam[]> {
+    const response = await this.request("/teams")
+    return response.teams || []
+  }
+
+  async getTeam(teamId: string): Promise<FrameioTeam> {
+    return this.request(`/teams/${teamId}`)
+  }
+
+  // Project methods
+  async getProjects(teamId?: string): Promise<FrameioProject[]> {
+    const endpoint = teamId ? `/teams/${teamId}/projects` : "/projects"
+    const response = await this.request(endpoint)
+    return response.projects || []
   }
 
   async getProject(projectId: string): Promise<FrameioProject> {
-    return this.makeRequest(`/projects/${projectId}`)
+    return this.request(`/projects/${projectId}`)
   }
 
-  async createProject(name: string, description?: string): Promise<FrameioProject> {
-    return this.makeRequest("/projects", {
+  async createProject(data: Partial<FrameioProject>): Promise<FrameioProject> {
+    return this.request("/projects", {
       method: "POST",
-      body: JSON.stringify({ name, description }),
+      body: JSON.stringify(data),
     })
   }
 
-  async getAssets(projectId: string): Promise<FrameioAsset[]> {
-    return this.makeRequest(`/projects/${projectId}/assets`)
+  async updateProject(projectId: string, data: Partial<FrameioProject>): Promise<FrameioProject> {
+    return this.request(`/projects/${projectId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    })
+  }
+
+  // Asset methods
+  async getAssets(parentId: string): Promise<FrameioAsset[]> {
+    const response = await this.request(`/assets/${parentId}/children`)
+    return response.assets || []
   }
 
   async getAsset(assetId: string): Promise<FrameioAsset> {
-    return this.makeRequest(`/assets/${assetId}`)
+    return this.request(`/assets/${assetId}`)
   }
 
-  async uploadAsset(projectId: string, file: File): Promise<FrameioAsset> {
-    const formData = new FormData()
-    formData.append("file", file)
-
-    return this.makeRequest(`/projects/${projectId}/assets`, {
-      method: "POST",
-      body: formData,
-      headers: {
-        Authorization: `Bearer ${this.config.apiKey}`,
-        // Don't set Content-Type for FormData
-      },
-    })
+  async uploadAsset(parentId: string, file: File): Promise<FrameioAsset> {
+    // Implementation would handle file upload
+    throw new Error("Upload implementation needed")
   }
 
+  // Comment methods
   async getComments(assetId: string): Promise<FrameioComment[]> {
-    return this.makeRequest(`/assets/${assetId}/comments`)
+    const response = await this.request(`/assets/${assetId}/comments`)
+    return response.comments || []
   }
 
-  async createComment(assetId: string, text: string, timestamp?: number): Promise<FrameioComment> {
-    return this.makeRequest(`/assets/${assetId}/comments`, {
+  async createComment(data: Partial<FrameioComment>): Promise<FrameioComment> {
+    return this.request("/comments", {
       method: "POST",
-      body: JSON.stringify({ text, timestamp }),
+      body: JSON.stringify(data),
     })
   }
 
-  async updateComment(commentId: string, text: string): Promise<FrameioComment> {
-    return this.makeRequest(`/comments/${commentId}`, {
+  async updateComment(commentId: string, data: Partial<FrameioComment>): Promise<FrameioComment> {
+    return this.request(`/comments/${commentId}`, {
       method: "PUT",
-      body: JSON.stringify({ text }),
+      body: JSON.stringify(data),
     })
   }
 
   async deleteComment(commentId: string): Promise<void> {
-    await this.makeRequest(`/comments/${commentId}`, {
+    await this.request(`/comments/${commentId}`, {
       method: "DELETE",
     })
   }
 
+  // v4 Reaction methods
   async addReaction(commentId: string, emoji: string): Promise<void> {
-    await this.makeRequest(`/comments/${commentId}/reactions`, {
+    await this.request(`/comments/${commentId}/reactions`, {
       method: "POST",
       body: JSON.stringify({ emoji }),
     })
   }
 
   async removeReaction(commentId: string, emoji: string): Promise<void> {
-    await this.makeRequest(`/comments/${commentId}/reactions/${emoji}`, {
+    await this.request(`/comments/${commentId}/reactions/${emoji}`, {
       method: "DELETE",
     })
   }
 
-  async search(query: string, projectId?: string): Promise<any> {
-    const params = new URLSearchParams({ q: query })
-    if (projectId) {
-      params.append("project_id", projectId)
-    }
-
-    return this.makeRequest(`/search?${params.toString()}`)
-  }
-
+  // Analytics methods (v4)
   async getProjectAnalytics(projectId: string): Promise<any> {
-    return this.makeRequest(`/projects/${projectId}/analytics`)
+    return this.request(`/projects/${projectId}/analytics`)
+  }
+
+  async getAssetAnalytics(assetId: string): Promise<any> {
+    return this.request(`/assets/${assetId}/analytics`)
+  }
+
+  // Search methods
+  async search(query: string, filters?: any): Promise<any> {
+    const params = new URLSearchParams({ q: query, ...filters })
+    return this.request(`/search?${params}`)
   }
 }
 
-export function createFrameioService(): FrameioService {
-  const config: FrameioConfig = {
-    apiKey: process.env.FRAMEIO_API_KEY || "",
-    baseUrl: process.env.FRAMEIO_API_URL || "https://api.frame.io/v2",
-  }
-
-  return new FrameioService(config)
+// Utility functions
+export function formatTimestamp(seconds: number): string {
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = Math.floor(seconds % 60)
+  return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`
 }
 
-export const frameioService = createFrameioService()
+export function getCommentPriorityColor(priority?: string): string {
+  switch (priority) {
+    case "urgent":
+      return "bg-red-100 text-red-800 border-red-200"
+    case "high":
+      return "bg-orange-100 text-orange-800 border-orange-200"
+    case "medium":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200"
+    case "low":
+      return "bg-green-100 text-green-800 border-green-200"
+    default:
+      return "bg-gray-100 text-gray-800 border-gray-200"
+  }
+}
 
-export type { FrameioProject, FrameioAsset, FrameioComment }
+export function isFrameioUrl(url: string): boolean {
+  return url.includes("frame.io") || url.includes("frameio")
+}
+
+export function extractFrameioId(url: string): string | null {
+  const match = url.match(/frame\.io\/(?:projects|assets)\/([a-zA-Z0-9-]+)/)
+  return match ? match[1] : null
+}

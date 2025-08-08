@@ -1,54 +1,51 @@
 import { type NextRequest, NextResponse } from "next/server"
-import bcrypt from "bcryptjs"
-import { neon } from "@neondatabase/serverless"
-
-const sql = neon(process.env.DATABASE_URL!)
+import { DatabaseService } from "@/lib/database"
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, password } = await request.json()
+    console.log("📝 Register request received")
 
-    // Validate input
-    if (!name || !email || !password) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+    const { email, password, name, role, company } = await request.json()
+
+    if (!email || !password || !name) {
+      return NextResponse.json({ success: false, error: "Email, password, and name are required" }, { status: 400 })
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 })
-    }
+    const db = DatabaseService.getInstance()
 
     // Check if user already exists
-    const existingUser = await sql`
-      SELECT id FROM users WHERE email = ${email}
-    `
-
-    if (existingUser.length > 0) {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 })
+    const existingUser = await db.getUserByEmail(email)
+    if (existingUser) {
+      return NextResponse.json({ success: false, error: "User already exists with this email" }, { status: 409 })
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12)
+    // Create new user
+    const newUser = await db.createUser({
+      email,
+      password,
+      name,
+      role: role || "client",
+      company,
+    })
 
-    // Create user with basic plan
-    const [user] = await sql`
-      INSERT INTO users (name, email, password_hash, plan, created_at)
-      VALUES (${name}, ${email}, ${hashedPassword}, 'basic', NOW())
-      RETURNING id, name, email, plan, created_at
-    `
+    if (!newUser) {
+      return NextResponse.json({ success: false, error: "Failed to create user" }, { status: 500 })
+    }
 
+    console.log("✅ User registered successfully:", email)
     return NextResponse.json({
       success: true,
-      message: "User created successfully",
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        plan: user.plan,
-        created_at: user.created_at,
-      },
+      message: "User registered successfully",
     })
   } catch (error) {
-    console.error("Registration error:", error)
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    console.error("💥 Register error:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

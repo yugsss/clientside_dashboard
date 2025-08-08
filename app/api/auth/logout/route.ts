@@ -1,26 +1,34 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { NextResponse } from "next/server"
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    console.log("🚪 API: Logout request received")
+    console.log("🚪 Logout request received")
 
     const response = NextResponse.json({
       success: true,
-      message: "Logout successful",
+      message: "Logged out successfully",
     })
 
-    // Clear session cookie
-    response.cookies.set("session", "", {
+    // Clear the auth cookie
+    response.cookies.set("auth-token", "", {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 0, // Expire immediately
+      maxAge: 0,
+      path: "/",
     })
 
-    console.log("✅ API: Logout successful")
+    console.log("✅ Logout successful")
     return response
   } catch (error) {
-    console.error("💥 API: Logout error:", error)
-    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 })
+    console.error("💥 Logout error:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }

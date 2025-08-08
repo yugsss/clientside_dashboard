@@ -1,34 +1,46 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { cookies } from "next/headers"
-import jwt from "jsonwebtoken"
-import { DatabaseService } from "../../../lib/database"
-
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
-
-async function getAuthenticatedUser(request: NextRequest) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("auth-token")?.value
-
-  if (!token) {
-    throw new Error("No token provided")
-  }
-
-  const decoded = jwt.verify(token, JWT_SECRET) as any
-  return decoded.userId
-}
+import { verify } from "jsonwebtoken"
+import { DatabaseService } from "@/lib/database"
+import { env } from "@/lib/env"
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = await getAuthenticatedUser(request)
-    const { searchParams } = new URL(request.url)
-    const unreadOnly = searchParams.get("unreadOnly") === "true"
+    console.log("🔔 Notifications request received")
+
+    const token = request.cookies.get("auth-token")?.value
+
+    if (!token) {
+      return NextResponse.json({ success: false, error: "No authentication token" }, { status: 401 })
+    }
+
+    // Verify JWT token
+    let decoded: { userId: string; email: string; role: string }
+    try {
+      decoded = verify(token, env.JWT_SECRET) as { userId: string; email: string; role: string }
+    } catch (error) {
+      return NextResponse.json({ success: false, error: "Invalid token" }, { status: 401 })
+    }
 
     const db = DatabaseService.getInstance()
-    const notifications = await db.getNotifications(userId, unreadOnly)
 
-    return NextResponse.json({ notifications })
+    // Get user notifications
+    const notifications = await db.getNotificationsByUserId(decoded.userId)
+
+    console.log("✅ Notifications retrieved for:", decoded.email)
+
+    return NextResponse.json({
+      success: true,
+      notifications,
+    })
   } catch (error) {
-    console.error("Get notifications error:", error)
-    return NextResponse.json({ error: "Failed to fetch notifications" }, { status: 500 })
+    console.error("💥 Notifications error:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 },
+    )
   }
 }
