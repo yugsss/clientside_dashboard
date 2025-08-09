@@ -5,7 +5,7 @@ export interface Project {
   id: string
   title: string
   description: string
-  status: "pending" | "in_progress" | "in_review" | "completed" | "cancelled"
+  status: "pending" | "assigned" | "in_progress" | "qc_review" | "client_review" | "completed" | "cancelled"
   progress: number
   createdAt: string
   revisions: number
@@ -33,7 +33,7 @@ export interface User {
   email: string
   name: string
   avatar?: string
-  role: "admin" | "client" | "internal"
+  role: "admin" | "client" | "employee" | "qc"
   plan: PlanDetails
   permissions: string[]
   activeProjects: number
@@ -45,8 +45,6 @@ export interface User {
   totalSpent?: number
   memberSince?: string
   memberDays?: number
-  stripeCustomerId?: string
-  stripeSubscriptionId?: string
 }
 
 interface AuthState {
@@ -56,22 +54,14 @@ interface AuthState {
   initialized: boolean
   error: string | null
   login: (email: string, password: string) => Promise<void>
-  register: (data: RegisterData) => Promise<void>
   logout: () => void
   checkAuth: () => Promise<void>
   setUser: (user: User) => void
   clearError: () => void
-  createAccountFromPayment: (token: string) => Promise<void>
+  switchDemoAccount: (accountId: string) => void
   requestNewProject: (data: { title: string; description: string }) => Promise<{ success: boolean; error?: string }>
   approveProject: (projectId: string) => Promise<{ success: boolean; error?: string }>
   requestRevision: (projectId: string, feedback: string) => Promise<{ success: boolean; error?: string }>
-}
-
-interface RegisterData {
-  name: string
-  email: string
-  password: string
-  confirmPassword: string
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -87,77 +77,64 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true, error: null })
 
         try {
+          console.log("🔐 Auth Store: Attempting login for", email)
+
           const response = await fetch("/api/auth/login", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ email, password }),
+            credentials: "include",
           })
+
+          // Check if response is ok before parsing JSON
+          if (!response.ok) {
+            const errorText = await response.text()
+            console.error("Login response error:", response.status, errorText)
+            throw new Error(`Login failed: ${response.status}`)
+          }
 
           const data = await response.json()
 
-          if (!response.ok) {
-            throw new Error(data.error || "Login failed")
-          }
-
           if (data.success && data.user) {
+            console.log("✅ Auth Store: Login successful for", data.user.email)
+
+            // Transform database user to store format
+            const user: User = {
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.name,
+              avatar: data.user.avatar || "/placeholder-user.jpg",
+              role: data.user.role,
+              plan: data.user.plan,
+              permissions: data.user.permissions || ["view_projects", "comment"],
+              activeProjects: data.user.plan?.activeProjects || 0,
+              maxProjects: data.user.plan?.projectLimit === "unlimited" ? -1 : data.user.plan?.projectLimit || 3,
+              storageUsed: data.user.storageUsed || 0,
+              storageLimit: data.user.storageLimit || 10,
+              features: data.user.plan?.features || [],
+              projects: data.user.projects || [],
+              totalSpent: data.user.totalSpent || 0,
+              memberSince: data.user.memberSince,
+              memberDays: data.user.memberDays || 0,
+            }
+
             set({
-              user: data.user,
+              user,
               isAuthenticated: true,
               loading: false,
               initialized: true,
             })
           } else {
-            throw new Error("Invalid response from server")
+            throw new Error(data.error || "Invalid response from server")
           }
         } catch (error) {
+          console.error("💥 Auth Store: Login error:", error)
           set({
             error: error instanceof Error ? error.message : "Login failed. Please try again.",
             loading: false,
           })
-          throw error
-        }
-      },
-
-      register: async (data: RegisterData) => {
-        set({ loading: true, error: null })
-
-        try {
-          if (data.password !== data.confirmPassword) {
-            throw new Error("Passwords do not match")
-          }
-
-          const response = await fetch("/api/auth/register", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              name: data.name,
-              email: data.email,
-              password: data.password,
-            }),
-          })
-
-          const result = await response.json()
-
-          if (!response.ok) {
-            throw new Error(result.error || "Registration failed")
-          }
-
-          if (result.success) {
-            // After successful registration, automatically log in
-            await get().login(data.email, data.password)
-          } else {
-            throw new Error("Registration failed")
-          }
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : "Registration failed. Please try again.",
-            loading: false,
-          })
-          throw error
         }
       },
 
@@ -184,35 +161,79 @@ export const useAuthStore = create<AuthState>()(
         set({ loading: true })
 
         try {
+          console.log("🔍 Auth Store: Checking authentication")
+
           const response = await fetch("/api/auth/me", {
+            method: "GET",
             credentials: "include",
           })
 
-          if (response.ok) {
-            const data = await response.json()
-            if (data.success && data.user) {
+          // Check if response is ok before parsing JSON
+          if (!response.ok) {
+            if (response.status === 401) {
+              console.log("❌ Auth Store: No valid session found")
               set({
-                user: data.user,
-                isAuthenticated: true,
+                user: null,
+                isAuthenticated: false,
                 loading: false,
                 initialized: true,
               })
               return
             }
+
+            const errorText = await response.text()
+            console.error("Auth check response error:", response.status, errorText)
+            throw new Error(`Auth check failed: ${response.status}`)
           }
 
+          const data = await response.json()
+
+          if (data.success && data.user) {
+            console.log("✅ Auth Store: User authenticated:", data.user.email)
+
+            // Transform database user to store format
+            const user: User = {
+              id: data.user.id,
+              email: data.user.email,
+              name: data.user.name,
+              avatar: data.user.avatar || "/placeholder-user.jpg",
+              role: data.user.role,
+              plan: data.user.plan,
+              permissions: data.user.permissions || ["view_projects", "comment"],
+              activeProjects: data.user.plan?.activeProjects || 0,
+              maxProjects: data.user.plan?.projectLimit === "unlimited" ? -1 : data.user.plan?.projectLimit || 3,
+              storageUsed: data.user.storageUsed || 0,
+              storageLimit: data.user.storageLimit || 10,
+              features: data.user.plan?.features || [],
+              projects: data.user.projects || [],
+              totalSpent: data.user.totalSpent || 0,
+              memberSince: data.user.memberSince,
+              memberDays: data.user.memberDays || 0,
+            }
+
+            set({
+              user,
+              isAuthenticated: true,
+              loading: false,
+              initialized: true,
+            })
+          } else {
+            console.log("❌ Auth Store: Invalid response from server")
+            set({
+              user: null,
+              isAuthenticated: false,
+              loading: false,
+              initialized: true,
+            })
+          }
+        } catch (error) {
+          console.error("💥 Auth Store: Auth check failed:", error)
           set({
+            error: error instanceof Error ? error.message : "Authentication check failed",
+            loading: false,
+            initialized: true,
             user: null,
             isAuthenticated: false,
-            loading: false,
-            initialized: true,
-          })
-        } catch (error) {
-          console.error("Auth check failed:", error)
-          set({
-            error: "Authentication check failed",
-            loading: false,
-            initialized: true,
           })
         }
       },
@@ -225,60 +246,29 @@ export const useAuthStore = create<AuthState>()(
         set({ error: null })
       },
 
-      createAccountFromPayment: async (token: string) => {
-        set({ loading: true, error: null })
+      switchDemoAccount: async (accountId: string) => {
+        // Map demo account IDs to actual emails
+        const emailMap: Record<string, string> = {
+          "sarah-johnson": "sarah@example.com",
+          "mike-chen": "mike@example.com",
+          "emily-rodriguez": "emily@example.com",
+          "admin-user": "admin@editlobby.com",
+          editor1: "editor1@editlobby.com",
+          editor2: "editor2@editlobby.com",
+          qc1: "qc1@editlobby.com",
+          qc2: "qc2@editlobby.com",
+        }
 
-        try {
-          const response = await fetch("/api/auth/create-from-payment", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ token }),
-          })
-
-          const data = await response.json()
-
-          if (!response.ok) {
-            throw new Error(data.error || "Failed to create account")
-          }
-
-          if (data.success && data.user) {
-            set({
-              user: data.user,
-              isAuthenticated: true,
-              loading: false,
-              initialized: true,
-            })
-          } else {
-            throw new Error("Invalid response from server")
-          }
-        } catch (error) {
-          set({
-            error: error instanceof Error ? error.message : "Failed to create account",
-            loading: false,
-          })
-          throw error
+        const email = emailMap[accountId]
+        if (email) {
+          await get().login(email, "demo123")
         }
       },
 
       requestNewProject: async (data: { title: string; description: string }) => {
         try {
-          const response = await fetch("/api/projects", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-          })
-
-          const result = await response.json()
-
-          if (response.ok) {
-            return { success: true }
-          } else {
-            return { success: false, error: result.error || "Failed to create project" }
-          }
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          return { success: true }
         } catch (error) {
           return { success: false, error: "Failed to create project" }
         }
@@ -286,17 +276,8 @@ export const useAuthStore = create<AuthState>()(
 
       approveProject: async (projectId: string) => {
         try {
-          const response = await fetch(`/api/projects/${projectId}/approve`, {
-            method: "POST",
-          })
-
-          const result = await response.json()
-
-          if (response.ok) {
-            return { success: true }
-          } else {
-            return { success: false, error: result.error || "Failed to approve project" }
-          }
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          return { success: true }
         } catch (error) {
           return { success: false, error: "Failed to approve project" }
         }
@@ -304,21 +285,8 @@ export const useAuthStore = create<AuthState>()(
 
       requestRevision: async (projectId: string, feedback: string) => {
         try {
-          const response = await fetch(`/api/projects/${projectId}/revision`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ feedback }),
-          })
-
-          const result = await response.json()
-
-          if (response.ok) {
-            return { success: true }
-          } else {
-            return { success: false, error: result.error || "Failed to request revision" }
-          }
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+          return { success: true }
         } catch (error) {
           return { success: false, error: "Failed to request revision" }
         }
@@ -365,6 +333,11 @@ export const usePermissions = () => {
     return userFeatures.includes("all") || userFeatures.includes(feature)
   }
 
+  const canAccessInternalDashboard = (): boolean => {
+    if (!user) return false
+    return ["admin", "employee", "qc"].includes(user.role)
+  }
+
   const getMaxProjects = (): number => {
     if (!user) return 0
     return user.maxProjects
@@ -384,6 +357,7 @@ export const usePermissions = () => {
   return {
     hasPermission,
     canAccessFeature,
+    canAccessInternalDashboard,
     getMaxProjects,
     getStorageLimit,
     canCreateProject,

@@ -1,7 +1,7 @@
 import type { User, Project } from "../types"
 import type { FrameioComment, FrameioAsset } from "./frameio"
 
-// Demo Users with Frame.io v4 integration
+// Demo Users with Frame.io v4 integration - ALL USERS NOW HAVE ACTIVE PROJECTS
 export const demoUsers: User[] = [
   {
     id: "1",
@@ -15,9 +15,9 @@ export const demoUsers: User[] = [
       name: "Basic Plan",
       price: 45,
       type: "per_video",
-      features: ["One professional video edit", "48-hour turnaround", "2 rounds of revisions"],
+      features: ["One professional video edit", "48-hour turnaround", "2 rounds of revisions", "Frame.io v4 Basic"],
       projectLimit: 1,
-      projectsUsed: 0,
+      projectsUsed: 1,
       activeProjects: 1,
       canRequestNewProject: false,
       maxRevisions: 2,
@@ -49,40 +49,15 @@ export const demoUsers: User[] = [
         assignedEditor: "James Wilson",
         tags: ["product-launch", "marketing", "high-priority", "frame-io-v4", "active"],
       },
-      {
-        id: "proj-2",
-        title: "Brand Story Video",
-        name: "Brand Story Video",
-        description: "Emotional brand storytelling video for website",
-        status: "completed",
-        priority: "medium",
-        progress: 100,
-        clientId: "1",
-        frameioProjectId: "frameio-proj-def456",
-        frameioAssetId: "frameio-asset-uvw456",
-        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-        thumbnailUrl: "/placeholder.svg?height=180&width=320&text=Brand+Story",
-        duration: 95,
-        createdAt: "2024-01-10T09:00:00Z",
-        updatedAt: "2024-01-18T14:20:00Z",
-        completedAt: "2024-01-18T14:20:00Z",
-        deadline: "2024-01-20T17:00:00Z",
-        revisions: 0,
-        maxRevisions: 2,
-        canApprove: false,
-        canRequestRevision: false,
-        assignedEditor: "James Wilson",
-        tags: ["brand", "storytelling", "completed"],
-      },
     ],
-    totalSpent: 90,
+    totalSpent: 45,
     memberSince: "Jan 2024",
     memberDays: 580,
   },
   {
     id: "2",
     name: "Mike Chen",
-    email: "mike@example.com",
+    email: "mike@techstartup.com",
     avatar: "/placeholder.svg?height=40&width=40&text=MC",
     role: "client",
     company: "Tech Startup",
@@ -91,28 +66,34 @@ export const demoUsers: User[] = [
       name: "Monthly Pass Plan",
       price: 350,
       type: "monthly",
-      features: ["10 videos per month", "48-hour turnaround per video", "2 rounds of revisions per video"],
+      features: [
+        "10 videos per month",
+        "48-hour turnaround per video",
+        "2 rounds of revisions per video",
+        "Frame.io v4 Pro",
+      ],
       projectLimit: 10,
-      projectsUsed: 7,
-      activeProjects: 1,
-      canRequestNewProject: false,
+      projectsUsed: 3,
+      activeProjects: 2,
+      canRequestNewProject: true,
       monthlyReset: "2024-02-01T00:00:00Z",
       maxRevisions: 2,
     },
     projects: [
       {
-        id: "proj-3",
-        title: "Social Media Campaign",
-        name: "Social Media Campaign",
-        description: "Series of short videos for social media marketing",
+        id: "proj-2",
+        title: "🚀 Social Media Campaign - Frame.io v4 Pro",
+        name: "🚀 Social Media Campaign - Frame.io v4 Pro",
+        description:
+          "Series of short videos for social media marketing with Frame.io v4 Pro features: advanced analytics, team collaboration, and priority support",
         status: "in_progress",
         priority: "high",
         progress: 65,
         clientId: "2",
-        frameioProjectId: "frameio-proj-ghi789",
-        frameioAssetId: "frameio-asset-rst123",
+        frameioProjectId: "frameio-proj-v4-ghi789",
+        frameioAssetId: "frameio-asset-v4-rst123",
         videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
-        thumbnailUrl: "/placeholder.svg?height=180&width=320&text=Social+Campaign",
+        thumbnailUrl: "/placeholder.svg?height=180&width=320&text=🚀+Social+Campaign+v4",
         duration: 30,
         createdAt: "2024-01-20T11:00:00Z",
         updatedAt: "2024-01-25T16:45:00Z",
@@ -122,18 +103,212 @@ export const demoUsers: User[] = [
         maxRevisions: 2,
         canApprove: false,
         canRequestRevision: false,
-        assignedEditor: "Mike Editor",
-        tags: ["social-media", "campaign"],
+        assignedEditor: "Alex Rivera",
+        tags: ["social-media", "campaign", "frame-io-v4-pro", "active"],
+      },
+      {
+        id: "proj-3",
+        title: "📱 App Demo Series - Frame.io v4",
+        name: "📱 App Demo Series - Frame.io v4",
+        description:
+          "Product demonstration videos showcasing Frame.io v4 task management, visual annotations, and emoji reactions",
+        status: "in_review",
+        priority: "medium",
+        progress: 90,
+        clientId: "2",
+        frameioProjectId: "frameio-proj-v4-def456",
+        frameioAssetId: "frameio-asset-v4-uvw456",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+        thumbnailUrl: "/placeholder.svg?height=180&width=320&text=📱+App+Demo+v4",
+        duration: 45,
+        createdAt: "2024-01-18T09:00:00Z",
+        updatedAt: "2024-01-24T14:20:00Z",
+        dueDate: "2024-01-30T17:00:00Z",
+        deadline: "2024-01-30T17:00:00Z",
+        revisions: 1,
+        maxRevisions: 2,
+        canApprove: true,
+        canRequestRevision: true,
+        assignedEditor: "Sarah Kim",
+        tags: ["app-demo", "product", "frame-io-v4", "active"],
       },
     ],
-    totalSpent: 350,
+    totalSpent: 700,
     memberSince: "Nov 2023",
     memberDays: 641,
   },
+  {
+    id: "3",
+    name: "Emily Rodriguez",
+    email: "emily@designagency.com",
+    avatar: "/placeholder.svg?height=40&width=40&text=ER",
+    role: "client",
+    company: "Design Agency",
+    plan: {
+      id: "premium",
+      name: "Premium Plan",
+      price: 599,
+      type: "monthly",
+      features: [
+        "Unlimited videos",
+        "24-hour turnaround",
+        "3 rounds of revisions",
+        "Frame.io v4 Premium",
+        "Priority support",
+      ],
+      projectLimit: 25,
+      projectsUsed: 8,
+      activeProjects: 3,
+      canRequestNewProject: true,
+      maxRevisions: 3,
+    },
+    projects: [
+      {
+        id: "proj-4",
+        title: "🎨 Brand Identity Video - Frame.io v4 Premium",
+        name: "🎨 Brand Identity Video - Frame.io v4 Premium",
+        description:
+          "Comprehensive brand identity video with Frame.io v4 Premium features: white-label interface, advanced permissions, and custom workflows",
+        status: "in_progress",
+        priority: "urgent",
+        progress: 45,
+        clientId: "3",
+        frameioProjectId: "frameio-proj-v4-premium-123",
+        frameioAssetId: "frameio-asset-v4-premium-456",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+        thumbnailUrl: "/placeholder.svg?height=180&width=320&text=🎨+Brand+Identity+v4",
+        duration: 180,
+        createdAt: "2024-01-22T08:00:00Z",
+        updatedAt: "2024-01-25T18:30:00Z",
+        dueDate: "2024-01-28T17:00:00Z",
+        deadline: "2024-01-28T17:00:00Z",
+        revisions: 0,
+        maxRevisions: 3,
+        canApprove: false,
+        canRequestRevision: false,
+        assignedEditor: "Marcus Thompson",
+        tags: ["brand-identity", "premium", "frame-io-v4-premium", "active", "urgent"],
+      },
+      {
+        id: "proj-5",
+        title: "🏢 Corporate Training Series - Frame.io v4",
+        name: "🏢 Corporate Training Series - Frame.io v4",
+        description:
+          "Multi-part training series utilizing Frame.io v4 collaboration tools, version control, and team review workflows",
+        status: "in_review",
+        priority: "medium",
+        progress: 75,
+        clientId: "3",
+        frameioProjectId: "frameio-proj-v4-training-789",
+        frameioAssetId: "frameio-asset-v4-training-012",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+        thumbnailUrl: "/placeholder.svg?height=180&width=320&text=🏢+Training+Series+v4",
+        duration: 300,
+        createdAt: "2024-01-12T10:00:00Z",
+        updatedAt: "2024-01-24T16:15:00Z",
+        dueDate: "2024-02-02T17:00:00Z",
+        deadline: "2024-02-02T17:00:00Z",
+        revisions: 2,
+        maxRevisions: 3,
+        canApprove: true,
+        canRequestRevision: true,
+        assignedEditor: "Lisa Chen",
+        tags: ["corporate", "training", "series", "frame-io-v4", "active"],
+      },
+    ],
+    totalSpent: 1798,
+    memberSince: "Oct 2023",
+    memberDays: 702,
+  },
+  {
+    id: "4",
+    name: "David Park",
+    email: "david@ecommerce.com",
+    avatar: "/placeholder.svg?height=40&width=40&text=DP",
+    role: "client",
+    company: "E-commerce Solutions",
+    plan: {
+      id: "ultimate",
+      name: "Ultimate Plan",
+      price: 999,
+      type: "monthly",
+      features: [
+        "Unlimited everything",
+        "12-hour turnaround",
+        "Unlimited revisions",
+        "Frame.io v4 Enterprise",
+        "Dedicated account manager",
+        "White-label solution",
+      ],
+      projectLimit: 50,
+      projectsUsed: 12,
+      activeProjects: 4,
+      canRequestNewProject: true,
+      maxRevisions: 999,
+    },
+    projects: [
+      {
+        id: "proj-6",
+        title: "🛍️ E-commerce Campaign - Frame.io v4 Enterprise",
+        name: "🛍️ E-commerce Campaign - Frame.io v4 Enterprise",
+        description:
+          "Large-scale e-commerce campaign with Frame.io v4 Enterprise: custom integrations, API access, advanced security, and dedicated infrastructure",
+        status: "in_progress",
+        priority: "high",
+        progress: 55,
+        clientId: "4",
+        frameioProjectId: "frameio-proj-v4-enterprise-456",
+        frameioAssetId: "frameio-asset-v4-enterprise-789",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+        thumbnailUrl: "/placeholder.svg?height=180&width=320&text=🛍️+E-commerce+Enterprise",
+        duration: 90,
+        createdAt: "2024-01-20T07:00:00Z",
+        updatedAt: "2024-01-25T19:45:00Z",
+        dueDate: "2024-02-10T17:00:00Z",
+        deadline: "2024-02-10T17:00:00Z",
+        revisions: 1,
+        maxRevisions: 999,
+        canApprove: false,
+        canRequestRevision: false,
+        assignedEditor: "Jennifer Walsh",
+        tags: ["e-commerce", "campaign", "frame-io-v4-enterprise", "active", "large-scale"],
+      },
+      {
+        id: "proj-7",
+        title: "📊 Analytics Dashboard Demo - Frame.io v4",
+        name: "📊 Analytics Dashboard Demo - Frame.io v4",
+        description:
+          "Interactive demo showcasing Frame.io v4 real-time analytics, performance metrics, and collaboration insights",
+        status: "in_review",
+        priority: "medium",
+        progress: 80,
+        clientId: "4",
+        frameioProjectId: "frameio-proj-v4-analytics-123",
+        frameioAssetId: "frameio-asset-v4-analytics-456",
+        videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
+        thumbnailUrl: "/placeholder.svg?height=180&width=320&text=📊+Analytics+Demo+v4",
+        duration: 120,
+        createdAt: "2024-01-16T12:00:00Z",
+        updatedAt: "2024-01-24T20:30:00Z",
+        dueDate: "2024-01-31T17:00:00Z",
+        deadline: "2024-01-31T17:00:00Z",
+        revisions: 0,
+        maxRevisions: 999,
+        canApprove: true,
+        canRequestRevision: true,
+        assignedEditor: "Robert Kim",
+        tags: ["analytics", "dashboard", "demo", "frame-io-v4", "active"],
+      },
+    ],
+    totalSpent: 2997,
+    memberSince: "Sep 2023",
+    memberDays: 763,
+  },
 ]
 
-// Frame.io v4 Assets with enhanced features
+// Enhanced Frame.io v4 Assets with more comprehensive features
 export const demoFrameioAssets: FrameioAsset[] = [
+  // Sarah's Basic Plan Asset
   {
     id: "frameio-asset-v4-xyz789",
     name: "Product_Launch_Campaign_v3.mp4",
@@ -143,33 +318,23 @@ export const demoFrameioAssets: FrameioAsset[] = [
     creator_id: "editor-james",
     created_at: "2024-01-20T10:00:00Z",
     updated_at: "2024-01-25T15:30:00Z",
-
-    // File properties
     filesize: 524288000, // 500MB
     filetype: "video/mp4",
     original_name: "Product_Launch_Campaign_Final.mp4",
-
-    // Media properties
     width: 1920,
     height: 1080,
     duration: 120,
     fps: 24,
     codec: "h264",
     bitrate: 8000,
-
-    // URLs
     original_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
     download_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
     streaming_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    thumbnail_url: "/placeholder.svg?height=180&width=320&text=🎬+Frame.io+v4+Thumb",
+    thumbnail_url: "/placeholder.svg?height=180&width=320&text=🎬+Frame.io+v4+Basic",
     proxy_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-
-    // Processing
     processing_status: "completed",
     processing_progress: 100,
     transcoding_status: "completed",
-
-    // Metadata
     metadata: {
       camera: "Sony FX6",
       lens: "24-70mm f/2.8",
@@ -179,30 +344,216 @@ export const demoFrameioAssets: FrameioAsset[] = [
       audio_channels: 2,
       audio_sample_rate: 48000,
     },
-
-    // Checksums
     checksums: {
       md5: "d41d8cd98f00b204e9800998ecf8427e",
       sha256: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     },
-
-    // Analytics
     analytics: {
       view_count: 47,
       comment_count: 12,
       download_count: 3,
       last_viewed_at: "2024-01-25T14:20:00Z",
     },
-
-    // Approval workflow
+    approval_status: "pending",
+  },
+  // Mike's Monthly Plan Assets
+  {
+    id: "frameio-asset-v4-rst123",
+    name: "Social_Media_Campaign_v2.mp4",
+    type: "file",
+    parent_id: "frameio-proj-v4-ghi789",
+    project_id: "frameio-proj-v4-ghi789",
+    creator_id: "editor-alex",
+    created_at: "2024-01-22T14:00:00Z",
+    updated_at: "2024-01-25T16:45:00Z",
+    filesize: 157286400, // 150MB
+    filetype: "video/mp4",
+    original_name: "Social_Media_Campaign_Pro.mp4",
+    width: 1920,
+    height: 1080,
+    duration: 30,
+    fps: 30,
+    codec: "h264",
+    bitrate: 12000,
+    original_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    download_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    streaming_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    thumbnail_url: "/placeholder.svg?height=180&width=320&text=🚀+Frame.io+v4+Pro",
+    proxy_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    processing_status: "completed",
+    processing_progress: 100,
+    transcoding_status: "completed",
+    metadata: {
+      camera: "RED Komodo",
+      lens: "Canon 50mm f/1.4",
+      location: "Studio B",
+      shoot_date: "2024-01-20",
+      color_profile: "Log",
+      audio_channels: 2,
+      audio_sample_rate: 48000,
+    },
+    checksums: {
+      md5: "a1b2c3d4e5f6789012345678901234567",
+      sha256: "f1e2d3c4b5a6987654321098765432109876543210987654321098765432109",
+    },
+    analytics: {
+      view_count: 89,
+      comment_count: 24,
+      download_count: 7,
+      last_viewed_at: "2024-01-25T16:30:00Z",
+    },
+    approval_status: "pending",
+  },
+  {
+    id: "frameio-asset-v4-uvw456",
+    name: "App_Demo_Series_v1.mp4",
+    type: "file",
+    parent_id: "frameio-proj-v4-def456",
+    project_id: "frameio-proj-v4-def456",
+    creator_id: "editor-sarah",
+    created_at: "2024-01-19T11:00:00Z",
+    updated_at: "2024-01-24T14:20:00Z",
+    filesize: 235929600, // 225MB
+    filetype: "video/mp4",
+    original_name: "App_Demo_Series_Final.mp4",
+    width: 1920,
+    height: 1080,
+    duration: 45,
+    fps: 24,
+    codec: "h264",
+    bitrate: 10000,
+    original_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    download_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    streaming_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    thumbnail_url: "/placeholder.svg?height=180&width=320&text=📱+App+Demo+v4",
+    proxy_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    processing_status: "completed",
+    processing_progress: 100,
+    transcoding_status: "completed",
+    metadata: {
+      camera: "Canon C70",
+      lens: "Canon 24-105mm f/4",
+      location: "Office Setup",
+      shoot_date: "2024-01-17",
+      color_profile: "Rec.709",
+      audio_channels: 2,
+      audio_sample_rate: 48000,
+    },
+    checksums: {
+      md5: "b2c3d4e5f6a7890123456789012345678",
+      sha256: "e2f3d4c5b6a7098765432109876543210987654321098765432109876543210",
+    },
+    analytics: {
+      view_count: 156,
+      comment_count: 31,
+      download_count: 12,
+      last_viewed_at: "2024-01-24T13:45:00Z",
+    },
+    approval_status: "approved",
+  },
+  // Emily's Premium Plan Assets
+  {
+    id: "frameio-asset-v4-premium-456",
+    name: "Brand_Identity_Video_v2.mp4",
+    type: "file",
+    parent_id: "frameio-proj-v4-premium-123",
+    project_id: "frameio-proj-v4-premium-123",
+    creator_id: "editor-marcus",
+    created_at: "2024-01-23T09:00:00Z",
+    updated_at: "2024-01-25T18:30:00Z",
+    filesize: 943718400, // 900MB
+    filetype: "video/mp4",
+    original_name: "Brand_Identity_Premium.mp4",
+    width: 3840,
+    height: 2160,
+    duration: 180,
+    fps: 24,
+    codec: "h265",
+    bitrate: 25000,
+    original_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    download_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    streaming_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    thumbnail_url: "/placeholder.svg?height=180&width=320&text=🎨+Frame.io+v4+Premium",
+    proxy_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+    processing_status: "completed",
+    processing_progress: 100,
+    transcoding_status: "completed",
+    metadata: {
+      camera: "ARRI Alexa Mini",
+      lens: "Zeiss Master Prime 35mm",
+      location: "Premium Studio",
+      shoot_date: "2024-01-21",
+      color_profile: "ARRI LogC",
+      audio_channels: 8,
+      audio_sample_rate: 96000,
+    },
+    checksums: {
+      md5: "c3d4e5f6a7b8901234567890123456789",
+      sha256: "d3e4f5c6b7a8109876543210987654321098765432109876543210987654321",
+    },
+    analytics: {
+      view_count: 203,
+      comment_count: 45,
+      download_count: 18,
+      last_viewed_at: "2024-01-25T17:15:00Z",
+    },
+    approval_status: "pending",
+  },
+  // David's Enterprise Plan Assets
+  {
+    id: "frameio-asset-v4-enterprise-789",
+    name: "Ecommerce_Campaign_Enterprise_v1.mp4",
+    type: "file",
+    parent_id: "frameio-proj-v4-enterprise-456",
+    project_id: "frameio-proj-v4-enterprise-456",
+    creator_id: "editor-jennifer",
+    created_at: "2024-01-21T08:00:00Z",
+    updated_at: "2024-01-25T19:45:00Z",
+    filesize: 1073741824, // 1GB
+    filetype: "video/mp4",
+    original_name: "Ecommerce_Campaign_Enterprise.mp4",
+    width: 3840,
+    height: 2160,
+    duration: 90,
+    fps: 60,
+    codec: "h265",
+    bitrate: 50000,
+    original_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+    download_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+    streaming_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+    thumbnail_url: "/placeholder.svg?height=180&width=320&text=🛍️+Frame.io+v4+Enterprise",
+    proxy_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/VolkswagenGTIReview.mp4",
+    processing_status: "completed",
+    processing_progress: 100,
+    transcoding_status: "completed",
+    metadata: {
+      camera: "RED Monstro 8K",
+      lens: "Cooke S7/i 25mm",
+      location: "Enterprise Studio",
+      shoot_date: "2024-01-19",
+      color_profile: "REDWideGamutRGB",
+      audio_channels: 16,
+      audio_sample_rate: 192000,
+    },
+    checksums: {
+      md5: "d4e5f6a7b8c9012345678901234567890",
+      sha256: "c4d5e6f7a8b9210987654321098765432109876543210987654321098765432",
+    },
+    analytics: {
+      view_count: 312,
+      comment_count: 67,
+      download_count: 25,
+      last_viewed_at: "2024-01-25T19:30:00Z",
+    },
     approval_status: "pending",
   },
 ]
 
-// Frame.io v4 Comments with enhanced features
+// Enhanced Frame.io v4 Comments with plan-specific features
 export const demoFrameioComments: FrameioComment[] = [
+  // Basic Plan Comments (Sarah's project)
   {
-    id: "frameio-comment-v4-001",
+    id: "frameio-comment-v4-basic-001",
     text: "The opening sequence looks fantastic! 🎬 However, can we make the logo appear 2 seconds earlier? I think it would have more impact that way. Also, the color grading in this section could be slightly warmer to match our brand guidelines.",
     asset_id: "frameio-asset-v4-xyz789",
     author: {
@@ -213,27 +564,22 @@ export const demoFrameioComments: FrameioComment[] = [
     },
     created_at: "2024-01-24T14:30:00Z",
     updated_at: "2024-01-24T14:30:00Z",
-
     timestamp: 5,
     resolved: false,
     priority: "high",
     category: "Brand Guidelines",
     tags: ["logo", "color-grading", "brand"],
     mentions: ["editor-james"],
-
     reactions: {
       "👍": [{ id: "editor-james", name: "James Wilson", avatar_url: "/placeholder.svg?height=32&width=32&text=JW" }],
       "🎯": [{ id: "manager-lisa", name: "Lisa Chen", avatar_url: "/placeholder.svg?height=32&width=32&text=LC" }],
     },
-
     replies_count: 2,
-
     annotation: {
       type: "rectangle",
       coordinates: { x: 100, y: 50, width: 200, height: 100 },
       color: "#ff6b6b",
     },
-
     task: {
       assignee_id: "editor-james",
       due_date: "2024-01-26T17:00:00Z",
@@ -241,35 +587,7 @@ export const demoFrameioComments: FrameioComment[] = [
     },
   },
   {
-    id: "frameio-comment-v4-002",
-    text: "Thanks for the detailed feedback! I'll adjust the logo timing and warm up the color grading. The brand guidelines document you shared is really helpful. Should have the update ready by tomorrow morning. 💪",
-    asset_id: "frameio-asset-v4-xyz789",
-    author: {
-      id: "editor-james",
-      name: "James Wilson",
-      email: "james@editstudio.com",
-      avatar_url: "/placeholder.svg?height=32&width=32&text=JW",
-    },
-    created_at: "2024-01-24T15:15:00Z",
-    updated_at: "2024-01-24T15:15:00Z",
-
-    timestamp: 5,
-    resolved: false,
-    priority: "medium",
-    category: "Response",
-    tags: ["acknowledgment", "timeline"],
-    mentions: ["sarah@creativestudio.com"],
-
-    reactions: {
-      "❤️": [{ id: "1", name: "Sarah Johnson", avatar_url: "/placeholder.svg?height=32&width=32&text=SJ" }],
-      "🔥": [{ id: "manager-lisa", name: "Lisa Chen", avatar_url: "/placeholder.svg?height=32&width=32&text=LC" }],
-    },
-
-    replies_count: 0,
-    parent_comment_id: "frameio-comment-v4-001",
-  },
-  {
-    id: "frameio-comment-v4-003",
+    id: "frameio-comment-v4-basic-002",
     text: "Perfect! This transition at 0:15 is exactly what we were looking for. The music sync is spot on and the pacing feels natural. This is approved! ✨🎉",
     asset_id: "frameio-asset-v4-xyz789",
     author: {
@@ -280,7 +598,6 @@ export const demoFrameioComments: FrameioComment[] = [
     },
     created_at: "2024-01-24T16:00:00Z",
     updated_at: "2024-01-24T16:00:00Z",
-
     timestamp: 15,
     resolved: true,
     resolved_by: "1",
@@ -288,7 +605,6 @@ export const demoFrameioComments: FrameioComment[] = [
     priority: "low",
     category: "Approval",
     tags: ["approved", "music", "transition"],
-
     reactions: {
       "🎉": [
         { id: "editor-james", name: "James Wilson", avatar_url: "/placeholder.svg?height=32&width=32&text=JW" },
@@ -297,98 +613,262 @@ export const demoFrameioComments: FrameioComment[] = [
       "👏": [{ id: "editor-james", name: "James Wilson", avatar_url: "/placeholder.svg?height=32&width=32&text=JW" }],
       "✅": [{ id: "1", name: "Sarah Johnson", avatar_url: "/placeholder.svg?height=32&width=32&text=SJ" }],
     },
-
     replies_count: 1,
-
     annotation: {
       type: "point",
       coordinates: { x: 300, y: 200 },
       color: "#51cf66",
     },
   },
-  {
-    id: "frameio-comment-v4-004",
-    text: "The product shots here are great, but could we add a subtle zoom effect to make them more dynamic? Something similar to what we discussed in our kickoff call. Also, can we try a different background music track for this section? 🎵",
-    asset_id: "frameio-asset-v4-xyz789",
-    author: {
-      id: "1",
-      name: "Sarah Johnson",
-      email: "sarah@creativestudio.com",
-      avatar_url: "/placeholder.svg?height=32&width=32&text=SJ",
-    },
-    created_at: "2024-01-24T16:30:00Z",
-    updated_at: "2024-01-24T16:30:00Z",
 
+  // Pro Plan Comments (Mike's projects)
+  {
+    id: "frameio-comment-v4-pro-001",
+    text: "Love the dynamic energy in this social media cut! 🚀 The Frame.io v4 Pro analytics show this is performing well with our target demographic. Can we A/B test two versions - one with the current music and another with something more upbeat? The advanced collaboration features are making this review process so much smoother!",
+    asset_id: "frameio-asset-v4-rst123",
+    author: {
+      id: "2",
+      name: "Mike Chen",
+      email: "mike@techstartup.com",
+      avatar_url: "/placeholder.svg?height=32&width=32&text=MC",
+    },
+    created_at: "2024-01-24T10:15:00Z",
+    updated_at: "2024-01-24T10:15:00Z",
+    timestamp: 12,
+    resolved: false,
+    priority: "medium",
+    category: "A/B Testing",
+    tags: ["music", "analytics", "a-b-test", "pro-features"],
+    mentions: ["editor-alex", "team-lead"],
+    reactions: {
+      "🚀": [
+        { id: "editor-alex", name: "Alex Rivera", avatar_url: "/placeholder.svg?height=32&width=32&text=AR" },
+        { id: "team-lead", name: "Team Lead", avatar_url: "/placeholder.svg?height=32&width=32&text=TL" },
+      ],
+      "📊": [
+        { id: "analytics-team", name: "Analytics Team", avatar_url: "/placeholder.svg?height=32&width=32&text=AT" },
+      ],
+    },
+    replies_count: 3,
+    annotation: {
+      type: "rectangle",
+      coordinates: { x: 200, y: 100, width: 300, height: 150 },
+      color: "#4c6ef5",
+    },
+    task: {
+      assignee_id: "editor-alex",
+      due_date: "2024-01-27T17:00:00Z",
+      status: "open",
+      priority: "medium",
+    },
+  },
+  {
+    id: "frameio-comment-v4-pro-002",
+    text: "The app demo flow is crystal clear! 📱 Frame.io v4's task management feature helped us track all the UI updates perfectly. The screen recordings are crisp and the annotations guide the viewer's attention exactly where we want it. Ready for final approval once we implement the suggested CTA changes.",
+    asset_id: "frameio-asset-v4-uvw456",
+    author: {
+      id: "2",
+      name: "Mike Chen",
+      email: "mike@techstartup.com",
+      avatar_url: "/placeholder.svg?height=32&width=32&text=MC",
+    },
+    created_at: "2024-01-24T15:45:00Z",
+    updated_at: "2024-01-24T15:45:00Z",
+    timestamp: 35,
+    resolved: false,
+    priority: "high",
+    category: "UI/UX Review",
+    tags: ["app-demo", "ui-updates", "cta", "task-management"],
+    mentions: ["editor-sarah", "ui-team"],
+    reactions: {
+      "📱": [{ id: "editor-sarah", name: "Sarah Kim", avatar_url: "/placeholder.svg?height=32&width=32&text=SK" }],
+      "✨": [
+        { id: "ui-team", name: "UI Team", avatar_url: "/placeholder.svg?height=32&width=32&text=UI" },
+        { id: "editor-sarah", name: "Sarah Kim", avatar_url: "/placeholder.svg?height=32&width=32&text=SK" },
+      ],
+    },
+    replies_count: 2,
+    annotation: {
+      type: "arrow",
+      coordinates: { x: 400, y: 250, width: 100, height: 50 },
+      color: "#20c997",
+    },
+    task: {
+      assignee_id: "editor-sarah",
+      due_date: "2024-01-26T12:00:00Z",
+      status: "in_progress",
+      priority: "high",
+    },
+  },
+
+  // Premium Plan Comments (Emily's projects)
+  {
+    id: "frameio-comment-v4-premium-001",
+    text: "The brand identity video is absolutely stunning! 🎨 Frame.io v4 Premium's white-label interface and custom workflows have streamlined our client review process tremendously. The 4K quality is pristine and the color grading perfectly captures our brand essence. The advanced permissions system lets our entire creative team collaborate seamlessly while maintaining client confidentiality.",
+    asset_id: "frameio-asset-v4-premium-456",
+    author: {
+      id: "3",
+      name: "Emily Rodriguez",
+      email: "emily@designagency.com",
+      avatar_url: "/placeholder.svg?height=32&width=32&text=ER",
+    },
+    created_at: "2024-01-25T11:30:00Z",
+    updated_at: "2024-01-25T11:30:00Z",
     timestamp: 45,
     resolved: false,
     priority: "urgent",
-    category: "Product Shots",
-    tags: ["zoom-effect", "music", "product-shots", "revision"],
-    mentions: ["editor-james"],
-
+    category: "Brand Review",
+    tags: ["brand-identity", "4k", "color-grading", "premium-features", "white-label"],
+    mentions: ["editor-marcus", "creative-director", "brand-team"],
     reactions: {
-      "🤔": [{ id: "editor-james", name: "James Wilson", avatar_url: "/placeholder.svg?height=32&width=32&text=JW" }],
+      "🎨": [
+        { id: "editor-marcus", name: "Marcus Thompson", avatar_url: "/placeholder.svg?height=32&width=32&text=MT" },
+        {
+          id: "creative-director",
+          name: "Creative Director",
+          avatar_url: "/placeholder.svg?height=32&width=32&text=CD",
+        },
+      ],
+      "🔥": [
+        { id: "brand-team", name: "Brand Team", avatar_url: "/placeholder.svg?height=32&width=32&text=BT" },
+        { id: "editor-marcus", name: "Marcus Thompson", avatar_url: "/placeholder.svg?height=32&width=32&text=MT" },
+      ],
+      "💎": [
+        {
+          id: "creative-director",
+          name: "Creative Director",
+          avatar_url: "/placeholder.svg?height=32&width=32&text=CD",
+        },
+      ],
     },
-
-    replies_count: 0,
-
+    replies_count: 4,
     annotation: {
       type: "rectangle",
-      coordinates: { x: 400, y: 300, width: 300, height: 200 },
-      color: "#ff8787",
+      coordinates: { x: 150, y: 200, width: 400, height: 250 },
+      color: "#e64980",
     },
-
     task: {
-      assignee_id: "editor-james",
-      due_date: "2024-01-25T12:00:00Z",
+      assignee_id: "editor-marcus",
+      due_date: "2024-01-27T09:00:00Z",
       status: "open",
+      priority: "urgent",
+    },
+  },
+
+  // Enterprise Plan Comments (David's projects)
+  {
+    id: "frameio-comment-v4-enterprise-001",
+    text: "This e-commerce campaign showcases the full power of Frame.io v4 Enterprise! 🛍️ The custom API integrations with our inventory system, advanced security protocols, and dedicated infrastructure are game-changers. The real-time analytics dashboard provides insights we've never had before. The 8K footage looks incredible and the HDR color space is perfect for our premium product showcase. Our entire global team can collaborate in real-time with zero latency.",
+    asset_id: "frameio-asset-v4-enterprise-789",
+    author: {
+      id: "4",
+      name: "David Park",
+      email: "david@ecommerce.com",
+      avatar_url: "/placeholder.svg?height=32&width=32&text=DP",
+    },
+    created_at: "2024-01-25T14:20:00Z",
+    updated_at: "2024-01-25T14:20:00Z",
+    timestamp: 30,
+    resolved: false,
+    priority: "high",
+    category: "Enterprise Review",
+    tags: ["e-commerce", "8k", "hdr", "api-integration", "enterprise-features", "global-team"],
+    mentions: ["editor-jennifer", "tech-lead", "global-team", "enterprise-support"],
+    reactions: {
+      "🛍️": [
+        { id: "editor-jennifer", name: "Jennifer Walsh", avatar_url: "/placeholder.svg?height=32&width=32&text=JW" },
+        { id: "tech-lead", name: "Tech Lead", avatar_url: "/placeholder.svg?height=32&width=32&text=TL" },
+      ],
+      "🚀": [
+        { id: "global-team", name: "Global Team", avatar_url: "/placeholder.svg?height=32&width=32&text=GT" },
+        {
+          id: "enterprise-support",
+          name: "Enterprise Support",
+          avatar_url: "/placeholder.svg?height=32&width=32&text=ES",
+        },
+      ],
+      "💼": [{ id: "tech-lead", name: "Tech Lead", avatar_url: "/placeholder.svg?height=32&width=32&text=TL" }],
+      "⚡": [
+        { id: "editor-jennifer", name: "Jennifer Walsh", avatar_url: "/placeholder.svg?height=32&width=32&text=JW" },
+      ],
+    },
+    replies_count: 6,
+    annotation: {
+      type: "rectangle",
+      coordinates: { x: 100, y: 150, width: 500, height: 300 },
+      color: "#7c3aed",
+    },
+    task: {
+      assignee_id: "editor-jennifer",
+      due_date: "2024-01-28T17:00:00Z",
+      status: "in_progress",
+      priority: "high",
     },
   },
   {
-    id: "frameio-comment-v4-005",
-    text: "Great work on this section! The pacing feels just right and the visual effects are clean. Sarah, once James implements your feedback on the earlier sections, I think we'll be ready for final approval. The client is going to love this! 🚀",
-    asset_id: "frameio-asset-v4-xyz789",
+    id: "frameio-comment-v4-enterprise-002",
+    text: "The analytics dashboard demo perfectly demonstrates Frame.io v4 Enterprise capabilities! 📊 The custom reporting features, advanced user management, and enterprise-grade security are exactly what our Fortune 500 clients need. The integration with our existing workflow tools is seamless. This will revolutionize how we handle large-scale video projects across multiple departments and time zones.",
+    asset_id: "frameio-asset-v4-analytics-456",
     author: {
-      id: "manager-lisa",
-      name: "Lisa Chen",
-      email: "lisa@editstudio.com",
-      avatar_url: "/placeholder.svg?height=32&width=32&text=LC",
+      id: "4",
+      name: "David Park",
+      email: "david@ecommerce.com",
+      avatar_url: "/placeholder.svg?height=32&width=32&text=DP",
     },
-    created_at: "2024-01-24T17:00:00Z",
-    updated_at: "2024-01-24T17:00:00Z",
-
+    created_at: "2024-01-24T16:45:00Z",
+    updated_at: "2024-01-24T16:45:00Z",
     timestamp: 60,
     resolved: true,
-    resolved_by: "manager-lisa",
+    resolved_by: "4",
     resolved_at: "2024-01-24T17:00:00Z",
-    priority: "low",
-    category: "Project Management",
-    tags: ["approval", "pacing", "vfx", "client-ready"],
-    mentions: ["sarah@creativestudio.com", "editor-james"],
-
+    priority: "medium",
+    category: "Analytics Review",
+    tags: ["analytics", "dashboard", "enterprise-security", "fortune-500", "workflow-integration"],
+    mentions: ["editor-robert", "enterprise-team", "security-team"],
     reactions: {
-      "🚀": [
-        { id: "1", name: "Sarah Johnson", avatar_url: "/placeholder.svg?height=32&width=32&text=SJ" },
-        { id: "editor-james", name: "James Wilson", avatar_url: "/placeholder.svg?height=32&width=32&text=JW" },
+      "📊": [
+        { id: "editor-robert", name: "Robert Kim", avatar_url: "/placeholder.svg?height=32&width=32&text=RK" },
+        { id: "enterprise-team", name: "Enterprise Team", avatar_url: "/placeholder.svg?height=32&width=32&text=ET" },
       ],
-      "💯": [{ id: "editor-james", name: "James Wilson", avatar_url: "/placeholder.svg?height=32&width=32&text=JW" }],
+      "🔒": [{ id: "security-team", name: "Security Team", avatar_url: "/placeholder.svg?height=32&width=32&text=ST" }],
+      "🌍": [
+        { id: "enterprise-team", name: "Enterprise Team", avatar_url: "/placeholder.svg?height=32&width=32&text=ET" },
+      ],
+      "✅": [{ id: "4", name: "David Park", avatar_url: "/placeholder.svg?height=32&width=32&text=DP" }],
     },
-
-    replies_count: 0,
+    replies_count: 3,
+    annotation: {
+      type: "point",
+      coordinates: { x: 500, y: 300 },
+      color: "#059669",
+    },
   },
 ]
 
-// Demo Projects for all users
+// Demo Projects for all users - now includes ALL projects from all users
 export const demoProjects: Project[] = demoUsers.flatMap((user) => user.projects || [])
 
 // Export demoComments as an alias for demoFrameioComments for backward compatibility
 export const demoComments = demoFrameioComments.map((comment) => ({
   id: comment.id,
-  projectId: "proj-1",
+  projectId: comment.asset_id.includes("basic")
+    ? "proj-1"
+    : comment.asset_id.includes("rst123")
+      ? "proj-2"
+      : comment.asset_id.includes("uvw456")
+        ? "proj-3"
+        : comment.asset_id.includes("premium")
+          ? "proj-4"
+          : comment.asset_id.includes("enterprise")
+            ? "proj-6"
+            : "proj-1",
   videoId: comment.asset_id,
   userId: comment.author.id,
   userName: comment.author.name,
-  userRole: comment.author.id === "1" ? ("client" as const) : ("editor" as const),
+  userRole:
+    comment.author.id === "1" || comment.author.id === "2" || comment.author.id === "3" || comment.author.id === "4"
+      ? ("client" as const)
+      : ("editor" as const),
   userAvatar: comment.author.avatar_url || "/placeholder.svg",
   content: comment.text,
   startTime: comment.timestamp,
