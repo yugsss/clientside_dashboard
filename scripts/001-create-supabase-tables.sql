@@ -89,7 +89,7 @@ CREATE TABLE IF NOT EXISTS project_activities (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  action VARCHAR(50) NOT NULL CHECK (action IN ('created', 'assigned', 'progress_updated', 'submitted_for_qc', 'qc_approved', 'qc_rejected', 'submitted_for_review', 'client  'submitted_for_qc', 'qc_approved', 'qc_rejected', 'submitted_for_review', 'client_approved', 'client_rejected')),
+  action VARCHAR(50) NOT NULL CHECK (action IN ('created', 'assigned', 'progress_updated', 'submitted_for_qc', 'qc_approved', 'qc_rejected', 'submitted_for_review', 'client_approved', 'client_rejected')),
   details TEXT NOT NULL,
   metadata JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -114,10 +114,49 @@ BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE 'plpgsql';
 
--- Create triggers for updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_video_comments_updated_at BEFORE UPDATE ON video_comments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_user_settings_updated_at BEFORE UPDATE ON user_settings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- Create triggers for updated_at using conditional blocks
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_users_updated_at') THEN
+        CREATE TRIGGER update_users_updated_at
+        BEFORE UPDATE ON users
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_projects_updated_at') THEN
+        CREATE TRIGGER update_projects_updated_at
+        BEFORE UPDATE ON projects
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_video_comments_updated_at') THEN
+        CREATE TRIGGER update_video_comments_updated_at
+        BEFORE UPDATE ON video_comments
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END;
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_user_settings_updated_at') THEN
+        CREATE TRIGGER update_user_settings_updated_at
+        BEFORE UPDATE ON user_settings
+        FOR EACH ROW
+        EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+END;
+$$;
