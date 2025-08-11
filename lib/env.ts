@@ -6,7 +6,9 @@ export const env = {
   // Supabase
   SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_URL || "",
   SUPABASE_ANON_KEY:
-    process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY || "",
+    process.env.SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    "",
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SUPABASE_SERVICE_ROLE_KEY || "",
 
   // Authentication
@@ -89,6 +91,50 @@ export const frameioConfig = {
   webhookSecret: env.FRAMEIO_WEBHOOK_SECRET,
 }
 
+// Auth configuration - MISSING EXPORT
+export const authConfig = {
+  jwtSecret: env.JWT_SECRET,
+  sessionMaxAge: 60 * 60 * 24 * 7, // 7 days
+  cookieName: "session",
+  nextAuthSecret: env.NEXTAUTH_SECRET,
+  nextAuthUrl: env.NEXTAUTH_URL,
+}
+
+// Notification configuration - MISSING EXPORT
+export const notificationConfig = {
+  vapidPublicKey: env.VAPID_PUBLIC_KEY,
+  enablePushNotifications: !!env.VAPID_PUBLIC_KEY,
+  adminEmail: env.ADMIN_EMAIL,
+}
+
+// WebSocket configuration - MISSING EXPORT
+export const websocketConfig = {
+  enabled: env.NODE_ENV === "production",
+  port: 3001,
+  cors: {
+    origin: env.APP_URL,
+    methods: ["GET", "POST"],
+  },
+}
+
 // Development helpers
 export const isDevelopment = env.NODE_ENV === "development"
 export const isProduction = env.NODE_ENV === "production"
+
+// Debug function to check environment variables - MISSING EXPORT
+export function debugEnvVars() {
+  console.log("🔍 Environment Variables Check:")
+  console.log("DATABASE_URL:", env.DATABASE_URL ? "✅ Set" : "❌ Missing")
+  console.log("SUPABASE_URL:", env.SUPABASE_URL ? "✅ Set" : "❌ Missing")
+  console.log("SUPABASE_ANON_KEY:", env.SUPABASE_ANON_KEY ? "✅ Set" : "❌ Missing")
+  console.log("SUPABASE_SERVICE_ROLE_KEY:", env.SUPABASE_SERVICE_ROLE_KEY ? "✅ Set" : "❌ Missing")
+  console.log("NEXTAUTH_SECRET:", env.NEXTAUTH_SECRET ? "✅ Set" : "❌ Missing")
+  console.log("JWT_SECRET:", env.JWT_SECRET ? "✅ Set" : "❌ Missing")
+  console.log("STRIPE_SECRET_KEY:", env.STRIPE_SECRET_KEY ? "✅ Set" : "❌ Missing")
+  console.log("STRIPE_WEBHOOK_SECRET:", env.STRIPE_WEBHOOK_SECRET ? "✅ Set" : "❌ Missing")
+  console.log("SMTP_HOST:", env.SMTP_HOST ? "✅ Set" : "❌ Missing")
+  console.log("SMTP_USER:", env.SMTP_USER ? "✅ Set" : "❌ Missing")
+  console.log("SMTP_PASS:", env.SMTP_PASS ? "✅ Set" : "❌ Missing")
+  console.log("FRAMEIO_API_KEY:", env.FRAMEIO_API_KEY ? "✅ Set" : "❌ Missing")
+  console.log("VAPID_PUBLIC_KEY:", env.VAPID_PUBLIC_KEY ? "✅ Set" : "❌ Missing")
+}

@@ -317,6 +317,56 @@ export class FrameioClient {
   }
 }
 
+// Frame.io Service - MISSING EXPORT
+export class FrameioService {
+  private client: FrameioClient
+
+  constructor(apiKey: string) {
+    this.client = new FrameioClient(apiKey)
+  }
+
+  // Convenience methods that wrap the client
+  async getAccountInfo() {
+    return this.client.getAccount()
+  }
+
+  async getAllProjects() {
+    return this.client.getProjects()
+  }
+
+  async getProjectById(projectId: string) {
+    return this.client.getProject(projectId)
+  }
+
+  async getProjectAssets(projectId: string) {
+    return this.client.getAssets(projectId)
+  }
+
+  async getAssetComments(assetId: string) {
+    return this.client.getComments(assetId)
+  }
+
+  async addCommentToAsset(assetId: string, text: string, timestamp?: number) {
+    return this.client.createComment({
+      asset_id: assetId,
+      text,
+      timestamp,
+    })
+  }
+
+  async searchContent(query: string) {
+    return this.client.search(query)
+  }
+}
+
+// Factory function to create Frame.io service - MISSING EXPORT
+export function createFrameioService(apiKey: string): FrameioService {
+  return new FrameioService(apiKey)
+}
+
+// Default service instance - MISSING EXPORT
+export const frameioService = new FrameioService(process.env.FRAMEIO_API_KEY || "")
+
 // Utility functions
 export function formatTimestamp(seconds: number): string {
   const minutes = Math.floor(seconds / 60)
