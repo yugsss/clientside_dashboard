@@ -1,6 +1,3 @@
--- Enable the Stripe extension
-CREATE EXTENSION IF NOT EXISTS "stripe" WITH SCHEMA "extensions";
-
 -- Create customers table
 CREATE TABLE IF NOT EXISTS stripe_customers (
   id TEXT PRIMARY KEY,

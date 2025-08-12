@@ -149,3 +149,41 @@ export interface FrameioComment {
     users: string[]
   }[]
 }
+
+export interface ChatMessage {
+  id: string
+  content: string
+  role: "user" | "assistant" | "system"
+  timestamp: string
+  userId?: string
+  metadata?: {
+    projectId?: string
+    attachments?: string[]
+    mentions?: string[]
+  }
+}
+
+export interface Video {
+  id: string
+  title: string
+  description?: string
+  url: string
+  thumbnailUrl?: string
+  duration: number
+  fileSize: number
+  format: string
+  resolution: {
+    width: number
+    height: number
+  }
+  framerate: number
+  status: "uploading" | "processing" | "ready" | "error"
+  projectId?: string
+  createdAt: string
+  updatedAt: string
+  metadata?: {
+    codec?: string
+    bitrate?: number
+    aspectRatio?: string
+  }
+}
