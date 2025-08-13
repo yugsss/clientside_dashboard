@@ -4,12 +4,9 @@ export const env = {
   DATABASE_URL: process.env.DATABASE_URL || process.env.SUPABASE_POSTGRES_URL || "",
 
   // Supabase
-  SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_URL || "",
-  SUPABASE_ANON_KEY:
-    process.env.SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.SUPABASE_NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    "",
-  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SUPABASE_SERVICE_ROLE_KEY || "",
+  SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "",
+  SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SUPABASE_ANON_KEY || "",
+  SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
 
   // Authentication
   NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || "",
@@ -50,7 +47,15 @@ export const env = {
 
 // Validation function to check required environment variables
 export function validateEnv() {
-  const requiredVars = ["DATABASE_URL", "SUPABASE_URL", "SUPABASE_ANON_KEY", "NEXTAUTH_SECRET", "JWT_SECRET"]
+  const requiredVars = [
+    "DATABASE_URL",
+    "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
+    "NEXTAUTH_SECRET",
+    "JWT_SECRET",
+    "STRIPE_SECRET_KEY",
+    "FRAMEIO_API_KEY",
+  ]
 
   const missing = requiredVars.filter((varName) => !env[varName as keyof typeof env])
 
@@ -91,7 +96,7 @@ export const frameioConfig = {
   webhookSecret: env.FRAMEIO_WEBHOOK_SECRET,
 }
 
-// Auth configuration - MISSING EXPORT
+// Auth configuration
 export const authConfig = {
   jwtSecret: env.JWT_SECRET,
   sessionMaxAge: 60 * 60 * 24 * 7, // 7 days
@@ -100,14 +105,14 @@ export const authConfig = {
   nextAuthUrl: env.NEXTAUTH_URL,
 }
 
-// Notification configuration - MISSING EXPORT
+// Notification configuration
 export const notificationConfig = {
   vapidPublicKey: env.VAPID_PUBLIC_KEY,
   enablePushNotifications: !!env.VAPID_PUBLIC_KEY,
   adminEmail: env.ADMIN_EMAIL,
 }
 
-// WebSocket configuration - MISSING EXPORT
+// WebSocket configuration
 export const websocketConfig = {
   enabled: env.NODE_ENV === "production",
   port: 3001,
@@ -121,7 +126,7 @@ export const websocketConfig = {
 export const isDevelopment = env.NODE_ENV === "development"
 export const isProduction = env.NODE_ENV === "production"
 
-// Debug function to check environment variables - MISSING EXPORT
+// Debug function to check environment variables
 export function debugEnvVars() {
   console.log("🔍 Environment Variables Check:")
   console.log("DATABASE_URL:", env.DATABASE_URL ? "✅ Set" : "❌ Missing")

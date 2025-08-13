@@ -7,51 +7,231 @@ INSERT INTO users (email, name, password_hash, role, company, avatar) VALUES
 ('editor2@editlobby.com', 'Lisa Editor', '$2b$10$dummy.hash.for.demo', 'employee', 'Edit Lobby', '/placeholder.svg?height=40&width=40&text=LE')
 ON CONFLICT (email) DO NOTHING;
 
--- Insert demo projects
-INSERT INTO projects (title, description, client_id, assigned_editor_id, status, priority, deadline) VALUES
-('Product Launch Video', 'Marketing video for new product launch campaign', 3, 2, 'in_progress', 'high', '2024-02-15 17:00:00'),
-('Company Overview', 'Corporate overview video for website', 4, 5, 'review', 'medium', '2024-02-20 12:00:00'),
-('Training Series', 'Employee training video series - 5 episodes', 3, 2, 'pending', 'low', '2024-03-01 09:00:00'),
-('Event Highlights', 'Conference highlights and key moments', 4, 5, 'completed', 'medium', '2024-01-30 15:00:00');
+-- Insert demo projects using proper UUID references
+INSERT INTO projects (title, description, client_id, assigned_editor_id, status, priority, due_date) 
+SELECT 
+  'Product Launch Video',
+  'Marketing video for new product launch campaign',
+  u1.id,
+  u2.id,
+  'in_progress',
+  'high',
+  '2024-02-15'::date
+FROM users u1, users u2 
+WHERE u1.email = 'client@company.com' AND u2.email = 'editor@editlobby.com'
 
--- Insert demo videos
-INSERT INTO videos (project_id, title, file_url, thumbnail_url, duration, file_size, status) VALUES
-(1, 'Product Demo Raw Footage', '/videos/product-demo.mp4', '/thumbnails/product-demo.jpg', 180, 52428800, 'ready'),
-(1, 'Customer Testimonials', '/videos/testimonials.mp4', '/thumbnails/testimonials.jpg', 120, 35651584, 'ready'),
-(2, 'CEO Interview', '/videos/ceo-interview.mp4', '/thumbnails/ceo-interview.jpg', 300, 89128960, 'processing'),
-(4, 'Conference Day 1', '/videos/conf-day1.mp4', '/thumbnails/conf-day1.jpg', 480, 142606336, 'ready');
+UNION ALL
 
--- Insert demo comments
-INSERT INTO comments (video_id, user_id, content, timestamp_seconds, status) VALUES
-(1, 3, 'The product demo looks great! Can we add a call-to-action at the end?', 165.5, 'open'),
-(1, 2, 'I''ll add the CTA in the next revision. Good catch!', NULL, 'open'),
-(2, 3, 'The audio quality on the second testimonial needs improvement', 45.2, 'open'),
-(4, 4, 'Love the opening sequence! Very engaging.', 12.0, 'resolved');
+SELECT 
+  'Company Overview',
+  'Corporate overview video for website',
+  u1.id,
+  u2.id,
+  'qc_review',
+  'medium',
+  '2024-02-20'::date
+FROM users u1, users u2 
+WHERE u1.email = 'jane@startup.com' AND u2.email = 'editor2@editlobby.com'
 
--- Insert demo chat messages
-INSERT INTO chat_messages (user_id, project_id, content, message_type) VALUES
-(3, 1, 'Hi Mike! Just wanted to check on the progress of the product launch video.', 'text'),
-(2, 1, 'Hey John! It''s coming along great. I''ve uploaded the first cut for your review.', 'text'),
-(3, 1, 'Awesome! I''ll take a look and leave some feedback.', 'text'),
-(2, 1, 'Perfect. Let me know if you need any changes!', 'text'),
-(4, 2, 'The company overview video looks fantastic! Great work Lisa.', 'text'),
-(5, 2, 'Thank you! I''m glad you like it. Ready for final approval?', 'text');
+UNION ALL
 
--- Insert demo notifications
-INSERT INTO notifications (user_id, title, message, type, is_read, action_url) VALUES
-(3, 'Video Ready for Review', 'Your product launch video is ready for review', 'project', false, '/projects/1'),
-(3, 'New Comment Added', 'Mike Editor replied to your comment on Product Demo Raw Footage', 'comment', false, '/projects/1/videos/1'),
-(2, 'Project Assigned', 'You have been assigned to Training Series project', 'project', true, '/projects/3'),
-(4, 'Video Completed', 'Your Event Highlights video has been completed', 'project', false, '/projects/4'),
-(1, 'System Maintenance', 'Scheduled maintenance tonight from 2-4 AM EST', 'system', true, null),
-(2, 'New Client Message', 'John Client sent you a message about Product Launch Video', 'info', false, '/chat/1'),
-(5, 'Deadline Reminder', 'Company Overview project deadline is in 3 days', 'warning', false, '/projects/2');
+SELECT 
+  'Training Series',
+  'Employee training video series - 5 episodes',
+  u1.id,
+  u2.id,
+  'pending',
+  'low',
+  '2024-03-01'::date
+FROM users u1, users u2 
+WHERE u1.email = 'client@company.com' AND u2.email = 'editor@editlobby.com'
 
--- Insert demo user settings
-INSERT INTO user_settings (user_id, theme, email_notifications, push_notifications, project_notifications, comment_notifications, marketing_emails) VALUES
-(1, 'dark', true, true, true, true, false),
-(2, 'light', true, true, true, true, false),
-(3, 'system', true, false, true, true, true),
-(4, 'light', false, false, true, false, false),
-(5, 'dark', true, true, true, true, false)
+UNION ALL
+
+SELECT 
+  'Event Highlights',
+  'Conference highlights and key moments',
+  u1.id,
+  u2.id,
+  'completed',
+  'medium',
+  '2024-01-30'::date
+FROM users u1, users u2 
+WHERE u1.email = 'jane@startup.com' AND u2.email = 'editor2@editlobby.com';
+
+-- Note: videos, comments, and chat_messages tables are not in the current schema
+-- These inserts have been removed to prevent errors
+
+-- Insert demo notifications using proper UUID references
+INSERT INTO notifications (user_id, title, message, type, is_read, action_url) 
+SELECT 
+  u.id,
+  'Video Ready for Review',
+  'Your product launch video is ready for review',
+  'project_update',
+  false,
+  '/projects/1'
+FROM users u WHERE u.email = 'client@company.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'New Comment Added',
+  'Mike Editor replied to your comment on Product Demo Raw Footage',
+  'info',
+  false,
+  '/projects/1/videos/1'
+FROM users u WHERE u.email = 'client@company.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'Project Assigned',
+  'You have been assigned to Training Series project',
+  'project_update',
+  true,
+  '/projects/3'
+FROM users u WHERE u.email = 'editor@editlobby.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'Video Completed',
+  'Your Event Highlights video has been completed',
+  'project_update',
+  false,
+  '/projects/4'
+FROM users u WHERE u.email = 'jane@startup.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'System Maintenance',
+  'Scheduled maintenance tonight from 2-4 AM EST',
+  'info',
+  true,
+  null
+FROM users u WHERE u.email = 'admin@editlobby.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'New Client Message',
+  'John Client sent you a message about Product Launch Video',
+  'info',
+  false,
+  '/chat/1'
+FROM users u WHERE u.email = 'editor@editlobby.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'Deadline Reminder',
+  'Company Overview project deadline is in 3 days',
+  'warning',
+  false,
+  '/projects/2'
+FROM users u WHERE u.email = 'editor2@editlobby.com';
+
+-- Insert demo user settings using proper UUID references
+INSERT INTO user_settings (user_id, theme, language, timezone, notifications_enabled, email_notifications, push_notifications, comment_notifications, project_update_notifications, billing_notifications, profile_visible, activity_visible, auto_play_videos, preferred_quality) 
+SELECT 
+  u.id,
+  'dark',
+  'en',
+  'UTC',
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+  true,
+  false,
+  true,
+  'hd'
+FROM users u WHERE u.email = 'admin@editlobby.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'light',
+  'en',
+  'UTC',
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+  true,
+  false,
+  true,
+  'hd'
+FROM users u WHERE u.email = 'editor@editlobby.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'light',
+  'en',
+  'UTC',
+  true,
+  true,
+  false,
+  true,
+  true,
+  true,
+  true,
+  false,
+  true,
+  'hd'
+FROM users u WHERE u.email = 'client@company.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'light',
+  'en',
+  'UTC',
+  false,
+  false,
+  false,
+  false,
+  true,
+  false,
+  true,
+  false,
+  true,
+  'hd'
+FROM users u WHERE u.email = 'jane@startup.com'
+
+UNION ALL
+
+SELECT 
+  u.id,
+  'dark',
+  'en',
+  'UTC',
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+  true,
+  false,
+  true,
+  'hd'
+FROM users u WHERE u.email = 'editor2@editlobby.com'
+
 ON CONFLICT (user_id) DO NOTHING;

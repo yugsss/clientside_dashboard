@@ -1,12 +1,12 @@
-import { Menu, TableIcon as TableBar, CalendarRange, Truck, Calculator, Settings, LogOut } from "lucide-react"
+import { Video, FileVideo, Upload, Settings, LogOut, BarChart3, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 const navItems = [
-  { icon: Menu, label: "Menu", color: "text-green-600" },
-  { icon: TableBar, label: "Table Services", color: "text-gray-600" },
-  { icon: CalendarRange, label: "Reservation", color: "text-gray-600" },
-  { icon: Truck, label: "Delivery", color: "text-gray-600" },
-  { icon: Calculator, label: "Accounting", color: "text-gray-600" },
+  { icon: Video, label: "Projects", color: "text-blue-600" },
+  { icon: FileVideo, label: "Video Library", color: "text-gray-600" },
+  { icon: Upload, label: "Upload", color: "text-gray-600" },
+  { icon: BarChart3, label: "Analytics", color: "text-gray-600" },
+  { icon: Users, label: "Team", color: "text-gray-600" },
   { icon: Settings, label: "Settings", color: "text-gray-600" },
 ]
 
@@ -14,12 +14,10 @@ export function SidebarNav() {
   return (
     <div className="w-64 p-4 border-r h-screen">
       <div className="flex items-center gap-2 mb-8">
-        <img
-          src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/WhatsApp%20Image%202025-01-12%20at%2012.32.42%20PM-QicgA83ZI0TfZlOynDOqlhOGnbwzEv.jpeg"
-          alt="Chili POS Logo"
-          className="w-8 h-8"
-        />
-        <span className="font-semibold">CHILI POS</span>
+        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <Video className="w-5 h-5 text-white" />
+        </div>
+        <span className="font-semibold">EDIT LOBBY</span>
       </div>
       <nav className="space-y-2">
         {navItems.map((item, index) => (
