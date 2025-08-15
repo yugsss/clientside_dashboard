@@ -1,77 +1,93 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Upload, Clock, CheckCircle, AlertCircle, Play, Plus, Star, Users, Calendar, DollarSign } from 'lucide-react'
-import { ProjectUpload } from './project-upload'
-import { useAuthStore } from '@/stores/auth-store'
-import type { Project } from '@/lib/supabase'
+import { useState, useEffect } from "react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Upload, Clock, CheckCircle, AlertCircle, Play, Star, Users, Calendar, DollarSign } from "lucide-react"
+import { ProjectUpload } from "./project-upload"
+import { useAuthStore } from "@/stores/auth-store"
+import type { Project } from "@/lib/supabase"
 
 interface ClientDashboardContentProps {
-  projects: Project[]
-  onProjectCreated: () => void
+  projects?: Project[]
+  onProjectCreated?: () => void
 }
 
-export function ClientDashboardContent({ projects, onProjectCreated }: ClientDashboardContentProps) {
+export function ClientDashboardContent({ projects = [], onProjectCreated = () => {} }: ClientDashboardContentProps) {
   const { user } = useAuthStore()
   const [showUpload, setShowUpload] = useState(false)
   const [stats, setStats] = useState({
     activeProjects: 0,
     completedProjects: 0,
     totalSpent: 0,
-    avgTurnaround: 0
+    avgTurnaround: 0,
   })
 
   useEffect(() => {
     if (projects.length > 0) {
-      const active = projects.filter(p => 
-        ['pending', 'assigned', 'in_progress', 'qc_review', 'client_review'].includes(p.status)
+      const active = projects.filter((p) =>
+        ["pending", "assigned", "in_progress", "qc_review", "client_review"].includes(p.status),
       ).length
-      
-      const completed = projects.filter(p => p.status === 'completed').length
-      
+
+      const completed = projects.filter((p) => p.status === "completed").length
+
       setStats({
         activeProjects: active,
         completedProjects: completed,
         totalSpent: user?.total_spent || 0,
-        avgTurnaround: 3 // Mock data
+        avgTurnaround: 3, // Mock data
       })
     }
   }, [projects, user])
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800'
-      case 'assigned': return 'bg-blue-100 text-blue-800'
-      case 'in_progress': return 'bg-purple-100 text-purple-800'
-      case 'qc_review': return 'bg-orange-100 text-orange-800'
-      case 'client_review': return 'bg-indigo-100 text-indigo-800'
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case "pending":
+        return "bg-yellow-100 text-yellow-800"
+      case "assigned":
+        return "bg-blue-100 text-blue-800"
+      case "in_progress":
+        return "bg-purple-100 text-purple-800"
+      case "qc_review":
+        return "bg-orange-100 text-orange-800"
+      case "client_review":
+        return "bg-indigo-100 text-indigo-800"
+      case "completed":
+        return "bg-green-100 text-green-800"
+      case "cancelled":
+        return "bg-red-100 text-red-800"
+      default:
+        return "bg-gray-100 text-gray-800"
     }
   }
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'pending': return <Clock className="h-4 w-4" />
-      case 'assigned': return <Users className="h-4 w-4" />
-      case 'in_progress': return <Play className="h-4 w-4" />
-      case 'qc_review': return <AlertCircle className="h-4 w-4" />
-      case 'client_review': return <Star className="h-4 w-4" />
-      case 'completed': return <CheckCircle className="h-4 w-4" />
-      default: return <Clock className="h-4 w-4" />
+      case "pending":
+        return <Clock className="h-4 w-4" />
+      case "assigned":
+        return <Users className="h-4 w-4" />
+      case "in_progress":
+        return <Play className="h-4 w-4" />
+      case "qc_review":
+        return <AlertCircle className="h-4 w-4" />
+      case "client_review":
+        return <Star className="h-4 w-4" />
+      case "completed":
+        return <CheckCircle className="h-4 w-4" />
+      default:
+        return <Clock className="h-4 w-4" />
     }
   }
 
   const formatStatus = (status: string) => {
-    return status.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ')
+    return status
+      .split("_")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ")
   }
 
   // Plan-specific features
@@ -79,21 +95,21 @@ export function ClientDashboardContent({ projects, onProjectCreated }: ClientDas
     basic: {
       maxProjects: 2,
       maxRevisions: 2,
-      features: ['2 videos per month', '2 revisions per video', 'Standard turnaround'],
-      color: 'text-blue-600'
+      features: ["2 videos per month", "2 revisions per video", "Standard turnaround"],
+      color: "text-blue-600",
     },
     pro: {
       maxProjects: 5,
       maxRevisions: 3,
-      features: ['5 videos per month', '3 revisions per video', 'Priority support'],
-      color: 'text-purple-600'
+      features: ["5 videos per month", "3 revisions per video", "Priority support"],
+      color: "text-purple-600",
     },
     enterprise: {
       maxProjects: -1, // Unlimited
       maxRevisions: -1,
-      features: ['Unlimited videos', 'Unlimited revisions', '24/7 support'],
-      color: 'text-gold-600'
-    }
+      features: ["Unlimited videos", "Unlimited revisions", "24/7 support"],
+      color: "text-gold-600",
+    },
   }
 
   const currentPlan = planFeatures[user?.plan_id as keyof typeof planFeatures] || planFeatures.basic
@@ -105,7 +121,7 @@ export function ClientDashboardContent({ projects, onProjectCreated }: ClientDas
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 text-white">
         <h1 className="text-2xl font-bold mb-2">Welcome back, {user?.name}!</h1>
         <p className="text-blue-100 mb-4">
-          You're on the <span className="font-semibold">{user?.plan_name || 'Basic Plan'}</span>
+          You're on the <span className="font-semibold">{user?.plan_name || "Basic Plan"}</span>
         </p>
         <div className="flex flex-wrap gap-2">
           {currentPlan.features.map((feature, index) => (
@@ -126,10 +142,9 @@ export function ClientDashboardContent({ projects, onProjectCreated }: ClientDas
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeProjects}</div>
             <p className="text-xs text-muted-foreground">
-              {currentPlan.maxProjects === -1 
-                ? 'Unlimited' 
-                : `${currentPlan.maxProjects - stats.activeProjects} remaining`
-              }
+              {currentPlan.maxProjects === -1
+                ? "Unlimited"
+                : `${currentPlan.maxProjects - stats.activeProjects} remaining`}
             </p>
           </CardContent>
         </Card>
@@ -214,9 +229,11 @@ export function ClientDashboardContent({ projects, onProjectCreated }: ClientDas
                         </div>
                         <Progress value={project.progress} className="h-2" />
                       </div>
-                      
+
                       <div className="flex justify-between items-center text-sm text-muted-foreground">
-                        <span>Revisions: {project.revisions}/{project.max_revisions}</span>
+                        <span>
+                          Revisions: {project.revisions}/{project.max_revisions}
+                        </span>
                         <span>Created: {new Date(project.created_at).toLocaleDateString()}</span>
                       </div>
 
@@ -242,12 +259,12 @@ export function ClientDashboardContent({ projects, onProjectCreated }: ClientDas
               <CardHeader>
                 <CardTitle>Project Limit Reached</CardTitle>
                 <CardDescription>
-                  You've reached your plan limit of {currentPlan.maxProjects} active projects. 
-                  Complete or cancel existing projects to upload new ones.
+                  You've reached your plan limit of {currentPlan.maxProjects} active projects. Complete or cancel
+                  existing projects to upload new ones.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" className="w-full bg-transparent">
                   Upgrade Plan
                 </Button>
               </CardContent>
@@ -263,18 +280,15 @@ export function ClientDashboardContent({ projects, onProjectCreated }: ClientDas
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">Upload New Project</h2>
-                <Button 
-                  variant="ghost" 
-                  onClick={() => setShowUpload(false)}
-                >
+                <Button variant="ghost" onClick={() => setShowUpload(false)}>
                   ×
                 </Button>
               </div>
-              <ProjectUpload 
+              <ProjectUpload
                 onProjectCreated={() => {
                   onProjectCreated()
                   setShowUpload(false)
-                }} 
+                }}
               />
             </div>
           </div>

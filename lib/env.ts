@@ -3,8 +3,8 @@ export const env = {
   // Database
   DATABASE_URL: process.env.DATABASE_URL || process.env.SUPABASE_POSTGRES_URL || "",
 
-  // Supabase
-  SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || "",
+  // Supabase - Fixed environment variable mapping to use available variables
+  SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || "",
   SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SUPABASE_ANON_KEY || "",
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
 
@@ -26,7 +26,7 @@ export const env = {
   SMTP_FROM: process.env.SMTP_FROM || "",
 
   // Frame.io
-  FRAMEIO_API_KEY: process.env.FRAMEIO_API_KEY || process.env.NEXT_PUBLIC_FRAMEIO_API_KEY || "",
+  FRAMEIO_API_KEY: process.env.FRAMEIO_API_KEY || "",
   FRAMEIO_API_URL: process.env.FRAMEIO_API_URL || "https://api.frame.io/v2",
   FRAMEIO_WEBHOOK_SECRET: process.env.FRAMEIO_WEBHOOK_SECRET || "",
 
@@ -142,4 +142,7 @@ export function debugEnvVars() {
   console.log("SMTP_PASS:", env.SMTP_PASS ? "✅ Set" : "❌ Missing")
   console.log("FRAMEIO_API_KEY:", env.FRAMEIO_API_KEY ? "✅ Set" : "❌ Missing")
   console.log("VAPID_PUBLIC_KEY:", env.VAPID_PUBLIC_KEY ? "✅ Set" : "❌ Missing")
+
+  const isValid = validateEnv()
+  console.log(`\n🎯 Overall Status: ${isValid ? "✅ Ready for deployment" : "❌ Missing required variables"}`)
 }

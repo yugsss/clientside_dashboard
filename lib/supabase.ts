@@ -1,8 +1,9 @@
 import { createClient } from "@supabase/supabase-js"
+import { env } from "./env"
 
 // Use the transaction pooler URL for serverless functions
-const supabaseUrl = process.env.SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SUPABASE_SERVICE_ROLE_KEY!
+const supabaseUrl = env.SUPABASE_URL
+const supabaseServiceKey = env.SUPABASE_SERVICE_ROLE_KEY
 
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
@@ -10,13 +11,13 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     persistSession: false,
   },
   db: {
-    schema: 'public'
+    schema: "public",
   },
   global: {
     headers: {
-      'x-application-name': 'editlobby-api'
-    }
-  }
+      "x-application-name": "editlobby-api",
+    },
+  },
 })
 
 // Client-side Supabase client (singleton pattern)
@@ -24,10 +25,7 @@ let supabaseClient: ReturnType<typeof createClient> | null = null
 
 export const getSupabaseClient = () => {
   if (!supabaseClient) {
-    supabaseClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
+    supabaseClient = createClient(env.SUPABASE_URL, env.SUPABASE_ANON_KEY)
   }
   return supabaseClient
 }
