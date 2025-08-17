@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+yarn.lock
+.pnpmrc
+.yarnrc.yml
+node_modules/.pnpm

@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken"
 import bcrypt from "bcryptjs"
 import { authConfig } from "./env"
-import type { User } from "../types"
+import { supabaseAdmin } from "./supabase"
+import type { User } from "./supabase"
 
 export interface AuthTokens {
   accessToken: string
@@ -17,8 +18,13 @@ export interface RegisterData {
   email: string
   password: string
   name: string
-  role?: "client" | "employee" | "admin"
+  role?: "client" | "employee" | "admin" | "qc"
   company?: string
+  planId?: string
+  planName?: string
+  planPrice?: number
+  planType?: "monthly" | "per-video"
+  planFeatures?: string[]
 }
 
 export class AuthService {
@@ -40,23 +46,25 @@ export class AuthService {
     return bcrypt.compare(password, hashedPassword)
   }
 
-  generateTokens(user: User): AuthTokens {
+  generateTokens(user: Omit<User, "password_hash">): AuthTokens {
     const payload = {
       id: user.id,
       email: user.email,
       role: user.role,
+      name: user.name,
+      planId: user.plan_id,
     }
 
     const accessToken = jwt.sign(payload, this.jwtSecret, {
       expiresIn: "15m",
-      issuer: "videoedit-pro",
-      audience: "videoedit-users",
+      issuer: "editlobby",
+      audience: "editlobby-users",
     })
 
     const refreshToken = jwt.sign(payload, this.jwtSecret, {
       expiresIn: "7d",
-      issuer: "videoedit-pro",
-      audience: "videoedit-users",
+      issuer: "editlobby",
+      audience: "editlobby-users",
     })
 
     return { accessToken, refreshToken }
@@ -65,126 +73,118 @@ export class AuthService {
   verifyToken(token: string): any {
     try {
       return jwt.verify(token, this.jwtSecret, {
-        issuer: "videoedit-pro",
-        audience: "videoedit-users",
+        issuer: "editlobby",
+        audience: "editlobby-users",
       })
     } catch (error) {
       throw new Error("Invalid or expired token")
     }
   }
 
-  async login(credentials: LoginCredentials): Promise<{ user: User; tokens: AuthTokens }> {
-    // Mock users for development - replace with database queries
-    const mockUsers: (User & { password: string })[] = [
-      {
-        id: "1",
-        email: "john@client.com",
-        password: await this.hashPassword("password"),
-        name: "John Doe",
-        role: "client",
-        company: "Acme Corp",
-        createdAt: "2024-01-01",
-        lastLogin: new Date().toISOString(),
-      },
-      {
-        id: "2",
-        email: "sarah@company.com",
-        password: await this.hashPassword("password"),
-        name: "Sarah Editor",
-        role: "employee",
-        company: "VideoEdit Pro",
-        createdAt: "2024-01-01",
-        lastLogin: new Date().toISOString(),
-      },
-      {
-        id: "3",
-        email: "admin@company.com",
-        password: await this.hashPassword("password"),
-        name: "Admin User",
-        role: "admin",
-        company: "VideoEdit Pro",
-        createdAt: "2024-01-01",
-        lastLogin: new Date().toISOString(),
-      },
-      {
-        id: "4",
-        email: "editor@company.com",
-        password: await this.hashPassword("password"),
-        name: "Alex Editor",
-        role: "employee",
-        company: "VideoEdit Pro",
-        createdAt: "2024-01-01",
-        lastLogin: new Date().toISOString(),
-      },
-      {
-        id: "5",
-        email: "qc@company.com",
-        password: await this.hashPassword("password"),
-        name: "QC Specialist",
-        role: "employee",
-        company: "VideoEdit Pro",
-        createdAt: "2024-01-01",
-        lastLogin: new Date().toISOString(),
-      },
-    ]
+  async login(credentials: LoginCredentials): Promise<{ user: Omit<User, "password_hash">; tokens: AuthTokens }> {
+    try {
+      // Query user from Supabase database
+      const { data: user, error } = await supabaseAdmin
+        .from("users")
+        .select("*")
+        .eq("email", credentials.email)
+        .single()
 
-    const user = mockUsers.find((u) => u.email === credentials.email)
-    if (!user) {
-      throw new Error("User not found")
-    }
+      if (error || !user) {
+        throw new Error("User not found")
+      }
 
-    const isValidPassword = await this.verifyPassword(credentials.password, user.password)
-    if (!isValidPassword) {
-      throw new Error("Invalid password")
-    }
+      // Verify password
+      const isValidPassword = await this.verifyPassword(credentials.password, user.password_hash)
+      if (!isValidPassword) {
+        throw new Error("Invalid password")
+      }
 
-    const { password, ...userWithoutPassword } = user
-    const tokens = this.generateTokens(userWithoutPassword)
+      // Update last login
+      await supabaseAdmin.from("users").update({ updated_at: new Date().toISOString() }).eq("id", user.id)
 
-    return {
-      user: userWithoutPassword,
-      tokens,
+      // Remove password hash from user object
+      const { password_hash, ...userWithoutPassword } = user
+      const tokens = this.generateTokens(userWithoutPassword)
+
+      return {
+        user: userWithoutPassword,
+        tokens,
+      }
+    } catch (error) {
+      console.error("Login error:", error)
+      throw new Error(error instanceof Error ? error.message : "Login failed")
     }
   }
 
-  async register(data: RegisterData): Promise<{ user: User; tokens: AuthTokens }> {
-    // Check if user already exists (mock implementation)
-    const existingUsers = ["john@client.com", "sarah@company.com", "admin@company.com"]
+  async register(data: RegisterData): Promise<{ user: Omit<User, "password_hash">; tokens: AuthTokens }> {
+    try {
+      // Check if user already exists
+      const { data: existingUser } = await supabaseAdmin.from("users").select("id").eq("email", data.email).single()
 
-    if (existingUsers.includes(data.email)) {
-      throw new Error("User already exists")
-    }
+      if (existingUser) {
+        throw new Error("User already exists")
+      }
 
-    const hashedPassword = await this.hashPassword(data.password)
+      const hashedPassword = await this.hashPassword(data.password)
+      const now = new Date().toISOString()
 
-    const newUser: User = {
-      id: Date.now().toString(),
-      email: data.email,
-      name: data.name,
-      role: data.role || "client",
-      company: data.company,
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString(),
-    }
+      // Create new user in database
+      const newUser = {
+        email: data.email,
+        name: data.name,
+        password_hash: hashedPassword,
+        role: data.role || "client",
+        company: data.company || null,
+        plan_id: data.planId || "basic",
+        plan_name: data.planName || "Basic Plan",
+        plan_price: data.planPrice || 45,
+        plan_type: data.planType || "per-video",
+        plan_features: data.planFeatures || [
+          "One professional video edit",
+          "48-hour turnaround",
+          "2 rounds of revisions",
+        ],
+        active_projects: 0,
+        max_projects: data.role === "client" ? (data.planType === "monthly" ? 10 : 1) : 999,
+        total_spent: data.planPrice || 45,
+        member_since: now,
+        created_at: now,
+        updated_at: now,
+      }
 
-    const tokens = this.generateTokens(newUser)
+      const { data: insertedUser, error } = await supabaseAdmin.from("users").insert(newUser).select("*").single()
 
-    return {
-      user: newUser,
-      tokens,
+      if (error || !insertedUser) {
+        throw new Error("Failed to create user")
+      }
+
+      // Remove password hash from response
+      const { password_hash, ...userWithoutPassword } = insertedUser
+      const tokens = this.generateTokens(userWithoutPassword)
+
+      return {
+        user: userWithoutPassword,
+        tokens,
+      }
+    } catch (error) {
+      console.error("Registration error:", error)
+      throw new Error(error instanceof Error ? error.message : "Registration failed")
     }
   }
 
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     const payload = this.verifyToken(refreshToken)
 
-    const user: User = {
-      id: payload.id,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role,
-      createdAt: payload.createdAt,
-      lastLogin: new Date().toISOString(),
+    // Get updated user data from database
+    const { data: user, error } = await supabaseAdmin
+      .from("users")
+      .select("id, email, name, role, plan_id")
+      .eq("id", payload.id)
+      .single()
+
+    if (error || !user) {
+      throw new Error("User not found")
     }
 
     return this.generateTokens(user)
@@ -195,17 +195,55 @@ export class AuthService {
     console.log("User logged out, refresh token invalidated:", refreshToken)
   }
 
-  async getCurrentUser(accessToken: string): Promise<User> {
+  async getCurrentUser(accessToken: string): Promise<Omit<User, "password_hash">> {
     const payload = this.verifyToken(accessToken)
 
-    return {
-      id: payload.id,
-      email: payload.email,
-      name: payload.name,
-      role: payload.role,
-      createdAt: payload.createdAt,
-      lastLogin: new Date().toISOString(),
+    const { data: user, error } = await supabaseAdmin
+      .from("users")
+      .select("*, password_hash")
+      .eq("id", payload.id)
+      .single()
+
+    if (error || !user) {
+      throw new Error("User not found")
     }
+
+    // Remove password hash from response
+    const { password_hash, ...userWithoutPassword } = user
+    return userWithoutPassword
+  }
+
+  async getUsersByRole(role: "client" | "employee" | "admin" | "qc"): Promise<Omit<User, "password_hash">[]> {
+    const { data: users, error } = await supabaseAdmin
+      .from("users")
+      .select("*, password_hash")
+      .eq("role", role)
+      .order("created_at", { ascending: false })
+
+    if (error) {
+      throw new Error("Failed to fetch users")
+    }
+
+    // Remove password hashes from response
+    return users.map(({ password_hash, ...user }) => user)
+  }
+
+  async updateUser(userId: string, updates: Partial<User>): Promise<Omit<User, "password_hash">> {
+    const { password_hash, ...safeUpdates } = updates as any
+
+    const { data: user, error } = await supabaseAdmin
+      .from("users")
+      .update({ ...safeUpdates, updated_at: new Date().toISOString() })
+      .eq("id", userId)
+      .select("*, password_hash")
+      .single()
+
+    if (error || !user) {
+      throw new Error("Failed to update user")
+    }
+
+    const { password_hash: _, ...userWithoutPassword } = user
+    return userWithoutPassword
   }
 }
 

@@ -1,0 +1,13 @@
+{
+  "buildCommand": "npm run build",
+  "installCommand": "npm install --no-optional",
+  "framework": "nextjs",
+  "env": {
+    "ENABLE_EXPERIMENTAL_COREPACK": "0"
+  },
+  "functions": {
+    "app/api/**/*.ts": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}

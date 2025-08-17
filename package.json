@@ -1,12 +1,13 @@
 {
-  "name": "edit-lobby-dashboard",
-  "version": "0.1.4",
+  "name": "editlobby-video-dashboard",
+  "version": "4.0.0",
   "private": true,
   "scripts": {
     "build": "next build",
-    "clean": "rm -rf .next node_modules yarn.lock",
+    "clean": "rm -rf .next node_modules package-lock.json pnpm-lock.yaml yarn.lock",
     "dev": "next dev",
-    "preinstall": "npx only-allow yarn",
+    "preinstall": "node -e \"if(process.env.npm_execpath && process.env.npm_execpath.indexOf('yarn') !== -1) throw new Error('Use npm instead of yarn'); if(process.env.npm_execpath && process.env.npm_execpath.indexOf('pnpm') !== -1) throw new Error('Use npm instead of pnpm');\"",
+    "postinstall": "echo 'Dependencies installed successfully with npm'",
     "lint": "next lint",
     "start": "next start",
     "type-check": "tsc --noEmit"
@@ -96,9 +97,8 @@
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
   },
-  "packageManager": "yarn@4.0.0",
   "engines": {
-    "node": ">=18.0.0",
-    "yarn": ">=4.0.0"
+    "node": "18.x",
+    "npm": ">=8.0.0"
   }
 }

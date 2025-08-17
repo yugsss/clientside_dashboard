@@ -30,6 +30,8 @@ export const getSupabaseClient = () => {
   return supabaseClient
 }
 
+export const supabase = supabaseAdmin
+
 // Types remain the same...
 export interface User {
   id: string
